@@ -174,9 +174,9 @@ class AttivitaDeleteView(DeleteView):
     template_name = "activities/attivita_confirm_delete.html"
     success_url = reverse_lazy('attivita-list')
     
-    def delete(self, request, *args, **kwargs):
+    def form_valid(self, form):
         messages.success(self.request, 'Attività eliminata con successo!')
-        return super().delete(request, *args, **kwargs)
+        return super().form_valid(form)
 
 # Views per azioni specifiche
 def chiudi_attivita(request, pk):
@@ -402,9 +402,9 @@ class CategoriaDeleteView(DeleteView):
     template_name = "activities/categoria_confirm_delete.html"
     success_url = reverse_lazy('categoria-list')
     
-    def delete(self, request, *args, **kwargs):
+    def form_valid(self, form):
         messages.success(self.request, 'Categoria eliminata con successo!')
-        return super().delete(request, *args, **kwargs)
+        return super().form_valid(form)
 
 # CRUD per Richiedenti
 class RichiedenteListView(ListView):
@@ -496,9 +496,9 @@ class RichiedenteDeleteView(DeleteView):
     template_name = "activities/richiedente_confirm_delete.html"
     success_url = reverse_lazy('richiedente-list')
     
-    def delete(self, request, *args, **kwargs):
+    def form_valid(self, form):
         messages.success(self.request, 'Richiedente eliminato con successo!')
-        return super().delete(request, *args, **kwargs)
+        return super().form_valid(form)
 
 def dashboard_activities(request):
     """Dashboard per visualizzare statistiche delle attività"""
