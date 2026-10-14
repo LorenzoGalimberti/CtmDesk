@@ -1,0 +1,27 @@
+{% extends 'base.html' %}
+
+{% block title %}Elimina step{% endblock %}
+
+{% block content %}
+<div class="container my-4" style="max-width: 600px;">
+    <div class="card border-danger">
+        <div class="card-header bg-danger text-white">
+            <h4 class="mb-0">Elimina step</h4>
+        </div>
+        <div class="card-body">
+            <p>
+                Sei sicuro di voler eliminare lo step <strong>"{{ step.titolo }}"</strong>
+                della procedura <strong>{{ step.procedura.nome }}</strong>?
+            </p>
+            <p class="text-muted mb-0">L'operazione non si può annullare.</p>
+        </div>
+        <div class="card-footer d-flex justify-content-between">
+            <a href="{% url 'step-detail' step.pk %}" class="btn btn-secondary">Annulla</a>
+            <form method="post">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-danger">Sì, elimina</button>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
