@@ -73,7 +73,7 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
-                # Aggiungi il tuo context processor personalizzato
+                # Context processor personalizzato
                 'diario.context_processors.aggiungi_data_corrente',
             ],
         },
@@ -132,7 +132,7 @@ STATIC_URL = 'static/'
 
 # Directory dove si trovano i file statici del progetto
 STATICFILES_DIRS = [
-    BASE_DIR / "static",  # Assicurati che questa sia la directory principale dei file statici
+    BASE_DIR / "static",
 ]
 
 # Default primary key field type
@@ -141,11 +141,9 @@ STATICFILES_DIRS = [
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 
-
-
+# File media caricati dagli utenti
 MEDIA_URL = '/media/'  # URL pubblico per i file media
 MEDIA_ROOT = BASE_DIR / 'media'  # Percorso assoluto per la cartella media
-
 
 
 # Summernote Configurazione Opzionale
@@ -160,6 +158,3 @@ SUMMERNOTE_CONFIG = {
 
 # Percorso per i file caricati
 SUMMERNOTE_UPLOAD_PATH = 'summernote_uploads/'
-
-MEDIA_URL = '/media/'
-MEDIA_ROOT = BASE_DIR / 'media'
