@@ -32,10 +32,9 @@ class ErroreForm(forms.ModelForm):
 
         # Widget personalizzati per sfruttare le classi Bootstrap
         widgets = {
-            'cliente': forms.TextInput(
+            'cliente': forms.Select(
                 attrs={
-                    'class': 'form-control',
-                    'placeholder': 'Nome del cliente'
+                    'class': 'form-select'
                 }
             ),
             'data': forms.DateInput(

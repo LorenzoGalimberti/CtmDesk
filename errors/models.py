@@ -1,10 +1,7 @@
 from django.db import models
 
-class Cliente(models.Model):
-    nome = models.CharField(max_length=100)
+from core.models import Cliente
 
-    def __str__(self):
-        return self.nome
 
 class Errore(models.Model):
     LIVELLO_CHOICES = [
@@ -13,7 +10,7 @@ class Errore(models.Model):
         ('alto', 'Alto'),
     ]
 
-    cliente = models.ForeignKey(Cliente, on_delete=models.CASCADE)
+    cliente = models.ForeignKey(Cliente, on_delete=models.PROTECT)
     data = models.DateField()
     ambiente = models.CharField(max_length=100)
     note = models.TextField(blank=True)
