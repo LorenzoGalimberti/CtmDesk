@@ -1,4 +1,5 @@
 from django.shortcuts import render
+from django.http import JsonResponse
 from datetime import date, datetime, timedelta
 from calendario.models import Evento
 from .models import Cliente
@@ -13,6 +14,7 @@ def homepage(request):
     
     # Eventi di oggi
     eventi_oggi = Evento.objects.filter(
+        owner=request.user,
         data_inizio__date=oggi,
         archived=False
     ).select_related('cliente').order_by('data_inizio')
@@ -20,6 +22,7 @@ def homepage(request):
     # Prossimi eventi della settimana (escluso oggi)
     fine_settimana = oggi + timedelta(days=7)
     prossimi_eventi = Evento.objects.filter(
+        owner=request.user,
         data_inizio__date__gt=oggi,
         data_inizio__date__lte=fine_settimana,
         archived=False
@@ -28,6 +31,7 @@ def homepage(request):
     # Eventi urgenti (che iniziano tra meno di 2 ore)
     tra_due_ore = ora_attuale + timedelta(hours=2)
     urgent_events = Evento.objects.filter(
+        owner=request.user,
         data_inizio__lte=tra_due_ore,
         data_inizio__gte=ora_attuale,
         archived=False
@@ -57,6 +61,7 @@ def homepage(request):
     
     # Eventi per cliente (top 3)
     events_by_client = Evento.objects.filter(
+        owner=request.user,
         archived=False
     ).values('cliente__nome').annotate(
         count=Count('id')
@@ -88,11 +93,13 @@ def get_dashboard_stats(request):
     
     stats = {
         'events_today': Evento.objects.filter(
+            owner=request.user,
             data_inizio__date=oggi, archived=False
         ).count(),
         'total_procedures': Procedura.objects.count(),
         'total_steps': Step.objects.count(),
         'urgent_events': Evento.objects.filter(
+            owner=request.user,
             data_inizio__lte=timezone.now() + timedelta(hours=2),
             data_inizio__gte=timezone.now(),
             archived=False
@@ -149,6 +156,7 @@ def search_global(request):
     events = Evento.objects.filter(
         Q(titolo__icontains=query) |
         Q(descrizione__icontains=query),
+        owner=request.user,
         archived=False
     ).select_related('cliente')[:5]
     
@@ -172,10 +180,12 @@ def quick_stats_widget(request):
     
     context = {
         'events_today': Evento.objects.filter(
+            owner=request.user,
             data_inizio__date=oggi, archived=False
         ).count(),
         'procedures_count': Procedura.objects.count(),
         'urgent_notifications': Evento.objects.filter(
+            owner=request.user,
             data_inizio__lte=timezone.now() + timedelta(hours=1),
             data_inizio__gte=timezone.now(),
             archived=False

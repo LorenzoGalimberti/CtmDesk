@@ -16,7 +16,7 @@ def calendario_view(request):
 
 def eventi_json(request):
     """Ritorna gli eventi in formato JSON per FullCalendar"""
-    eventi = Evento.objects.filter(archived=False)
+    eventi = Evento.objects.filter(owner=request.user, archived=False)
     eventi_data = [evento.as_dict() for evento in eventi]
     return JsonResponse(eventi_data, safe=False)
 
@@ -69,13 +69,14 @@ def aggiungi_evento(request):
     return JsonResponse({'error': 'Metodo non consentito'}, status=405)
 
 def evento_dettaglio(request, event_id):
-    evento = get_object_or_404(Evento, id=event_id)
+    evento = get_object_or_404(Evento, id=event_id, owner=request.user)
     
     # Cerca se esiste un task collegato a questo evento
     task_collegato = Task.objects.filter(
         title__contains=evento.titolo,
         data_creazione=evento.data_inizio.date(),
-        cliente=evento.cliente
+        cliente=evento.cliente,
+        owner=request.user
     ).first()
     
     context = {
@@ -88,13 +89,14 @@ def evento_dettaglio(request, event_id):
 def elimina_evento(request, event_id):
     """Elimina l'evento e opzionalmente il task collegato"""
     if request.method == 'POST':
-        evento = get_object_or_404(Evento, id=event_id)
+        evento = get_object_or_404(Evento, id=event_id, owner=request.user)
         
         # Trova e elimina anche il task collegato se esiste
         task_collegato = Task.objects.filter(
             title__contains=evento.titolo,
             data_creazione=evento.data_inizio.date(),
-            cliente=evento.cliente
+            cliente=evento.cliente,
+            owner=request.user
         ).first()
         
         if task_collegato:
@@ -109,7 +111,7 @@ def elimina_evento(request, event_id):
 
 def archivia_evento(request, event_id):
     """Archivia l'evento e il task collegato"""
-    evento = get_object_or_404(Evento, id=event_id)
+    evento = get_object_or_404(Evento, id=event_id, owner=request.user)
     evento.archived = True
     evento.save()
     
@@ -117,7 +119,8 @@ def archivia_evento(request, event_id):
     task_collegato = Task.objects.filter(
         title__contains=evento.titolo,
         data_creazione=evento.data_inizio.date(),
-        cliente=evento.cliente
+        cliente=evento.cliente,
+        owner=request.user
     ).first()
     
     if task_collegato and not task_collegato.archiviato:
@@ -134,4 +137,4 @@ class ListaEventiView(ListView):
     
     def get_queryset(self):
         archived = self.request.GET.get('archived', 'false') == 'true'
-        return Evento.objects.filter(archived=archived)
+        return Evento.objects.filter(owner=self.request.user, archived=archived)

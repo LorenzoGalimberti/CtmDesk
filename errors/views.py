@@ -3,7 +3,7 @@ from .models import Errore
 from .forms import ErroreForm
 
 def errore_list(request):
-    errori = Errore.objects.all()
+    errori = Errore.objects.filter(owner=request.user)
     return render(request, 'errore_list.html', {'errori': errori})
 
 def errore_create(request):
@@ -20,7 +20,7 @@ def errore_create(request):
     return render(request, 'errore_form.html', {'form': form})
 
 def errore_update(request, pk):
-    errore = get_object_or_404(Errore, pk=pk)
+    errore = get_object_or_404(Errore, pk=pk, owner=request.user)
     if request.method == 'POST':
         form = ErroreForm(request.POST, instance=errore)
         if form.is_valid():
@@ -31,7 +31,7 @@ def errore_update(request, pk):
     return render(request, 'errore_form.html', {'form': form})
 
 def errore_delete(request, pk):
-    errore = get_object_or_404(Errore, pk=pk)
+    errore = get_object_or_404(Errore, pk=pk, owner=request.user)
     if request.method == 'POST':
         errore.delete()
         return redirect('errore_list')
@@ -39,5 +39,5 @@ def errore_delete(request, pk):
 
 
 def errore_detail(request, pk):
-    errore = get_object_or_404(Errore, pk=pk)
+    errore = get_object_or_404(Errore, pk=pk, owner=request.user)
     return render(request, 'errore_detail.html', {'errore': errore})

@@ -9,7 +9,7 @@ from .forms import TaskForm
 
 def all_task(request):
     query = request.GET.get('q', '')
-    tasks = Task.objects.all()
+    tasks = Task.objects.filter(owner=request.user)
     if query:
         tasks = tasks.filter(
             Q(title__icontains=query) |
@@ -25,6 +25,7 @@ def task_list(request):
 
     # Archivia automaticamente i task completati di giorni precedenti
     tasks_to_archive = Task.objects.filter(
+        owner=request.user,
         completed=True,
         archiviato=False,
         data_creazione__lt=today
@@ -32,7 +33,7 @@ def task_list(request):
     for task in tasks_to_archive:
         task.archive()
 
-    tasks = Task.objects.filter(archiviato=False, data_creazione__lte=today).order_by('data_creazione')
+    tasks = Task.objects.filter(owner=request.user, archiviato=False, data_creazione__lte=today).order_by('data_creazione')
 
     # Filtra per cliente se il parametro GET è presente
     cliente_id = request.GET.get('cliente', None)
@@ -72,11 +73,11 @@ def add_task(request):
             return redirect('todo:task_list')
     else:
         form = TaskForm()
-    tasks = Task.objects.filter(archiviato=False).order_by('data_creazione')
+    tasks = Task.objects.filter(owner=request.user, archiviato=False).order_by('data_creazione')
     return render(request, 'task_list.html', {'tasks': tasks, 'form': form})
 
 def complete_task(request, task_id):
-    task = get_object_or_404(Task, id=task_id)
+    task = get_object_or_404(Task, id=task_id, owner=request.user)
     if request.method == 'POST':
         old_status = task.completed
         task.completed = not task.completed
@@ -105,7 +106,7 @@ def complete_task(request, task_id):
     return JsonResponse({'status': 'error'})
 
 def archive_task(request, task_id):
-    task = get_object_or_404(Task, id=task_id)
+    task = get_object_or_404(Task, id=task_id, owner=request.user)
     if not task.archiviato:
         task.archiviato = True
         task.data_archiviazione = timezone.now()
@@ -117,7 +118,7 @@ def archive_task(request, task_id):
     })
 
 def delete_task(request, task_id):
-    task = get_object_or_404(Task, id=task_id)
+    task = get_object_or_404(Task, id=task_id, owner=request.user)
     
     # Impedisci l'eliminazione di task collegati ad attività
     if task.task_type == 'activity':
@@ -130,7 +131,7 @@ def delete_task(request, task_id):
     return JsonResponse({'status': 'success'})
 
 def edit_task(request, task_id):
-    task = get_object_or_404(Task, id=task_id)
+    task = get_object_or_404(Task, id=task_id, owner=request.user)
     
     if request.method == 'POST':
         form = TaskForm(request.POST, instance=task)

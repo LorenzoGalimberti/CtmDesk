@@ -253,3 +253,97 @@ class IsolamentoAttivitaTests(BaseTestCase):
     def test_le_mie_si_aprono(self):
         risposta = self.client.get(reverse('attivita-detail', args=[self.mia.pk]))
         self.assertEqual(risposta.status_code, 200)
+
+
+class IsolamentoTodoEventiTests(BaseTestCase):
+    def setUp(self):
+        super().setUp()
+        from django.utils import timezone
+        from calendario.models import Evento
+        self.altro = get_user_model().objects.create_user('altro', password='x')
+        oggi = date.today()
+        self.mio_task = Task.objects.create(title='Mio', data_creazione=oggi, owner=self.user)
+        self.altrui_task = Task.objects.create(title='Altrui', data_creazione=oggi, owner=self.altro)
+        adesso = timezone.now()
+        self.mio_evento = Evento.objects.create(
+            titolo='Mio evento', data_inizio=adesso, data_fine=adesso, owner=self.user)
+        self.altrui_evento = Evento.objects.create(
+            titolo='Evento altrui', data_inizio=adesso, data_fine=adesso, owner=self.altro)
+
+    def test_liste_task_solo_miei(self):
+        for nome in ['todo:task_list', 'todo:all_task']:
+            with self.subTest(pagina=nome):
+                risposta = self.client.get(reverse(nome))
+                titoli = [t.title for t in risposta.context['tasks']]
+                self.assertEqual(titoli, ['Mio'])
+
+    def test_azioni_su_task_altrui_danno_404(self):
+        pk = self.altrui_task.pk
+        self.assertEqual(self.client.post(reverse('todo:complete_task', args=[pk])).status_code, 404)
+        self.assertEqual(self.client.get(reverse('todo:archive_task', args=[pk])).status_code, 404)
+        self.assertEqual(self.client.get(reverse('todo:delete_task', args=[pk])).status_code, 404)
+        self.assertEqual(self.client.get(reverse('todo:edit_task', args=[pk])).status_code, 404)
+        self.altrui_task.refresh_from_db()
+        self.assertFalse(self.altrui_task.completed)
+        self.assertFalse(self.altrui_task.archiviato)
+
+    def test_calendario_json_solo_miei(self):
+        risposta = self.client.get(reverse('eventi_json'))
+        self.assertEqual([e['title'] for e in risposta.json()], ['Mio evento'])
+
+    def test_lista_eventi_solo_miei(self):
+        risposta = self.client.get(reverse('lista_eventi'))
+        self.assertEqual([e.titolo for e in risposta.context['eventi']], ['Mio evento'])
+
+    def test_azioni_su_evento_altrui_danno_404(self):
+        from calendario.models import Evento
+        pk = self.altrui_evento.pk
+        self.assertEqual(self.client.get(reverse('evento_dettaglio', args=[pk])).status_code, 404)
+        self.assertEqual(self.client.post(reverse('elimina_evento', args=[pk])).status_code, 404)
+        self.assertEqual(self.client.get(reverse('archivia_evento', args=[pk])).status_code, 404)
+        self.altrui_evento.refresh_from_db()
+        self.assertFalse(self.altrui_evento.archived)
+        self.assertTrue(Evento.objects.filter(pk=pk).exists())
+
+    def test_il_mio_evento_si_apre(self):
+        risposta = self.client.get(reverse('evento_dettaglio', args=[self.mio_evento.pk]))
+        self.assertEqual(risposta.status_code, 200)
+
+
+class IsolamentoErroriHomeTests(BaseTestCase):
+    def setUp(self):
+        super().setUp()
+        self.altro = get_user_model().objects.create_user('altro', password='x')
+        dati = dict(cliente=self.cliente, data=date.today(), ambiente='Test',
+                    livello='basso', occorrenze=1)
+        self.mio = Errore.objects.create(owner=self.user, **dati)
+        self.altrui = Errore.objects.create(owner=self.altro, **dati)
+
+    def test_lista_errori_solo_miei(self):
+        risposta = self.client.get(reverse('errore_list'))
+        self.assertEqual(list(risposta.context['errori']), [self.mio])
+
+    def test_errore_altrui_danno_404(self):
+        pk = self.altrui.pk
+        for nome in ['errore_detail', 'errore_update', 'errore_delete']:
+            with self.subTest(vista=nome):
+                self.assertEqual(self.client.get(reverse(nome, args=[pk])).status_code, 404)
+        self.client.post(reverse('errore_delete', args=[pk]))
+        self.assertTrue(Errore.objects.filter(pk=pk).exists())
+
+    def test_il_mio_errore_si_apre(self):
+        self.assertEqual(
+            self.client.get(reverse('errore_detail', args=[self.mio.pk])).status_code, 200)
+
+    def test_home_e_ricerca_solo_miei_eventi(self):
+        from django.utils import timezone
+        from calendario.models import Evento
+        adesso = timezone.now()
+        for titolo, utente in (('Evento mio', self.user), ('Evento altrui', self.altro)):
+            Evento.objects.create(titolo=titolo, data_inizio=adesso, data_fine=adesso,
+                                  cliente=self.cliente, owner=utente)
+        home = self.client.get(reverse('home'))
+        self.assertEqual(list(home.context['events_by_client']),
+                         [{'cliente__nome': 'ACME', 'count': 1}])
+        ricerca = self.client.get(reverse('global_search'), {'q': 'Evento'})
+        self.assertEqual([r['title'] for r in ricerca.json()['results']], ['Evento mio'])
