@@ -53,6 +53,18 @@ class StepDetailView(DetailView):
     template_name = "procedure/step_detail.html"
     context_object_name = "step"
 
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        step = self.object
+        # Tutti gli step della procedura, nell'ordine scelto dall'utente
+        steps = list(Step.objects.filter(procedura=step.procedura).order_by('ordine', 'id'))
+        index = steps.index(step)
+        context['previous_step'] = steps[index - 1] if index > 0 else None
+        context['next_step'] = steps[index + 1] if index < len(steps) - 1 else None
+        context['current_position'] = index + 1
+        context['total_steps'] = len(steps)
+        return context
+
 from django.urls import reverse_lazy
 from django.views.generic import ListView, DetailView, CreateView, UpdateView, DeleteView
 from .models import Procedura, Step
