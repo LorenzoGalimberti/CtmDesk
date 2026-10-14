@@ -52,6 +52,7 @@
             <p><strong>🏠 Ambiente:</strong> {{ procedura.ambiente }}</p>
             <p><strong>👤 Cliente:</strong> {{ procedura.cliente }}</p>
             <p><strong>📂 Tipologia:</strong> {{ procedura.tipologia }}</p>
+            <p><strong>✍️ Autore:</strong> {{ procedura.owner.get_username|default:"-" }}</p>
         </div>
     </div>
 
@@ -112,9 +113,11 @@
         <a href="{% url 'procedura-list' %}" class="btn btn-outline-secondary">
             <i class="bi bi-arrow-left"></i> Torna alla lista
         </a>
+        {% if procedura.owner == user %}
         <a href="{% url 'step-create' procedura.id %}" class="btn btn-outline-success">
             <i class="bi bi-plus-circle"></i> Aggiungi Step
         </a>
+        {% endif %}
     </div>
 </div>
 
@@ -133,6 +136,7 @@
         
         // Inizializza Sortable
         var sortable = new Sortable(sortableContainer, {
+            disabled: {% if procedura.owner == user %}false{% else %}true{% endif %},
             animation: 150,
             ghostClass: 'sortable-ghost',
             chosenClass: 'sortable-chosen',

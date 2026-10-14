@@ -20,6 +20,7 @@
                     <th>🏠 Ambiente</th>
                     <th>👤 Cliente</th>
                     <th>📂 Tipologia</th>
+                    <th>✍️ Autore</th>
                     <th class="text-center">⚙️ Azioni</th>
                 </tr>
             </thead>
@@ -34,14 +35,17 @@
                     <td>{{ procedura.ambiente }}</td>
                     <td>{{ procedura.cliente }}</td>
                     <td>{{ procedura.tipologia }}</td>
+                    <td>{{ procedura.owner.get_username|default:"-" }}</td>
                     <td class="text-center">
                         <div class="d-flex justify-content-center">
+                            {% if procedura.owner == user %}
                             <a href="{% url 'procedura-update' procedura.pk %}" class="btn btn-warning btn-sm mx-1">
                                 <i class="bi bi-pencil-square"></i> Modifica
                             </a>
                             <a href="{% url 'procedura-delete' procedura.pk %}" class="btn btn-danger btn-sm mx-1">
                                 <i class="bi bi-trash"></i> Elimina
                             </a>
+                            {% endif %}
                         </div>
                     </td>
                 </tr>

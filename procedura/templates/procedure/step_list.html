@@ -15,8 +15,10 @@
                     <p class="text-muted mb-0">{{ step.corpo|truncatewords:15 }}</p>
                 </div>
                 <div>
+                    {% if step.procedura.owner == user %}
                     <a href="{% url 'step-update' step.id %}" class="btn btn-warning btn-sm">✏️</a>
                     <a href="{% url 'step-delete' step.id %}" class="btn btn-danger btn-sm">🗑️</a>
+                    {% endif %}
                 </div>
             </li>
         {% empty %}

@@ -131,7 +131,7 @@ class CategorieTests(BaseTestCase):
 class StepTests(BaseTestCase):
     def setUp(self):
         super().setUp()
-        self.procedura = Procedura.objects.create(nome='Proc', cliente=self.cliente)
+        self.procedura = Procedura.objects.create(nome='Proc', cliente=self.cliente, owner=self.user)
         self.s1 = Step.objects.create(procedura=self.procedura, titolo='Uno', corpo='x')
         self.s2 = Step.objects.create(procedura=self.procedura, titolo='Due', corpo='x')
         self.s3 = Step.objects.create(procedura=self.procedura, titolo='Tre', corpo='x')
@@ -410,3 +410,68 @@ class DiarioCondivisioneTests(BaseTestCase):
         utenti = risposta.context['form'].fields['condiviso_con'].queryset
         self.assertNotIn(self.user, utenti)
         self.assertIn(self.altro, utenti)
+
+
+class ProcedureCondiviseTests(BaseTestCase):
+    def setUp(self):
+        super().setUp()
+        self.altro = get_user_model().objects.create_user('altro', password='x')
+        self.mia = Procedura.objects.create(nome='Mia', cliente=self.cliente, owner=self.user)
+        self.altrui = Procedura.objects.create(nome='Altrui', cliente=self.cliente, owner=self.altro)
+        self.step_mio = Step.objects.create(procedura=self.mia, titolo='Mio step', corpo='x')
+        self.step_altrui = Step.objects.create(procedura=self.altrui, titolo='Step altrui', corpo='x')
+
+    def test_la_lista_mostra_tutte_le_procedure(self):
+        risposta = self.client.get(reverse('procedura-list'))
+        self.assertEqual({p.nome for p in risposta.context['procedure']}, {'Mia', 'Altrui'})
+
+    def test_posso_leggere_procedura_e_step_altrui(self):
+        self.assertEqual(self.client.get(reverse('procedura-detail', args=[self.altrui.pk])).status_code, 200)
+        self.assertEqual(self.client.get(reverse('step-detail', args=[self.step_altrui.pk])).status_code, 200)
+
+    def test_non_posso_modificare_o_eliminare_procedura_altrui(self):
+        for nome in ['procedura-update', 'procedura-delete']:
+            url = reverse(nome, args=[self.altrui.pk])
+            with self.subTest(vista=nome):
+                self.assertEqual(self.client.get(url).status_code, 404)
+                self.assertEqual(self.client.post(url, {'nome': 'X', 'cliente': self.cliente.pk}).status_code, 404)
+        self.altrui.refresh_from_db()
+        self.assertEqual(self.altrui.nome, 'Altrui')
+
+    def test_non_posso_toccare_gli_step_altrui(self):
+        url_nuovo = reverse('step-create', args=[self.altrui.pk])
+        self.assertEqual(self.client.get(url_nuovo).status_code, 404)
+        self.assertEqual(self.client.post(url_nuovo, {'titolo': 'N', 'corpo': 'x'}).status_code, 404)
+        for nome in ['step-update', 'step-delete']:
+            with self.subTest(vista=nome):
+                self.assertEqual(self.client.get(reverse(nome, args=[self.step_altrui.pk])).status_code, 404)
+        self.client.post(reverse('step-delete', args=[self.step_altrui.pk]))
+        self.assertTrue(Step.objects.filter(pk=self.step_altrui.pk).exists())
+        self.assertFalse(Step.objects.filter(titolo='N').exists())
+
+    def test_non_posso_riordinare_gli_step_altrui(self):
+        altro_step = Step.objects.create(procedura=self.altrui, titolo='B', corpo='x')
+        ordine_prima = list(Step.objects.filter(procedura=self.altrui).values_list('pk', 'ordine'))
+        risposta = self.client.post(
+            reverse('update-step-order'),
+            data=json.dumps({'step_order': [altro_step.pk, self.step_altrui.pk]}),
+            content_type='application/json',
+        )
+        self.assertEqual(risposta.status_code, 400)
+        self.assertEqual(list(Step.objects.filter(procedura=self.altrui).values_list('pk', 'ordine')), ordine_prima)
+
+    def test_posso_gestire_le_mie(self):
+        self.client.post(reverse('procedura-update', args=[self.mia.pk]),
+                         {'nome': 'Rinominata', 'cliente': self.cliente.pk})
+        self.mia.refresh_from_db()
+        self.assertEqual(self.mia.nome, 'Rinominata')
+        self.client.post(reverse('step-create', args=[self.mia.pk]), {'titolo': 'Nuovo', 'corpo': 'x'})
+        self.assertTrue(Step.objects.filter(procedura=self.mia, titolo='Nuovo').exists())
+        self.client.post(reverse('procedura-delete', args=[self.mia.pk]))
+        self.assertFalse(Procedura.objects.filter(pk=self.mia.pk).exists())
+
+    def test_non_posso_spostare_uno_step_in_una_procedura_altrui(self):
+        risposta = self.client.get(reverse('step-update', args=[self.step_mio.pk]))
+        scelte = risposta.context['form'].fields['procedura'].queryset
+        self.assertIn(self.mia, scelte)
+        self.assertNotIn(self.altrui, scelte)

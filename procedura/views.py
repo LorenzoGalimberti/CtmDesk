@@ -2,6 +2,8 @@ from django.urls import reverse_lazy
 from django.views.generic import ListView, DetailView, CreateView, UpdateView, DeleteView
 from .models import Procedura, Step
 
+from core.mixins import SoloMieiMixin
+
 # CRUD per Procedura
 class ProceduraListView(ListView):
     model = Procedura
@@ -35,13 +37,13 @@ class ProceduraCreateView(CreateView):
         form.instance.owner = self.request.user
         return super().form_valid(form)
 
-class ProceduraUpdateView(UpdateView):
+class ProceduraUpdateView(SoloMieiMixin, UpdateView):
     model = Procedura
     template_name = "procedure/procedura_form.html"
     fields = ['nome', 'ambiente', 'cliente', 'tipologia']
     success_url = reverse_lazy('procedura-list')
 
-class ProceduraDeleteView(DeleteView):
+class ProceduraDeleteView(SoloMieiMixin, DeleteView):
     model = Procedura
     template_name = "procedure/procedura_confirm_delete.html"
     success_url = reverse_lazy('procedura-list')
@@ -79,6 +81,10 @@ from django.views.generic import CreateView
 from .models import Procedura, Step
 
 class StepCreateView(CreateView):
+    def dispatch(self, request, *args, **kwargs):
+        get_object_or_404(Procedura, pk=kwargs.get('procedura_id'), owner=request.user)
+        return super().dispatch(request, *args, **kwargs)
+
     model = Step
     template_name = "procedure/step_form.html"
     fields = ['titolo', 'corpo', 'immagini']  # Rimosso 'procedura' perché lo assegniamo manualmente
@@ -97,13 +103,26 @@ class StepCreateView(CreateView):
         return context
 
 
-class StepUpdateView(UpdateView):
+class SoloMieiStepMixin:
+    """Gli step si toccano solo se la loro procedura è dell'utente."""
+
+    def get_queryset(self):
+        return super().get_queryset().filter(procedura__owner=self.request.user)
+
+
+class StepUpdateView(SoloMieiStepMixin, UpdateView):
     model = Step
     template_name = "procedure/step_form.html"
     fields = ['procedura', 'titolo', 'corpo', 'immagini']
     success_url = reverse_lazy('step-list')
 
-class StepDeleteView(DeleteView):
+    def get_form(self, form_class=None):
+        form = super().get_form(form_class)
+        # non si può spostare uno step in una procedura altrui
+        form.fields['procedura'].queryset = Procedura.objects.filter(owner=self.request.user)
+        return form
+
+class StepDeleteView(SoloMieiStepMixin, DeleteView):
     model = Step
     template_name = "procedure/step_confirm_delete.html"
     success_url = reverse_lazy('step-list')
@@ -125,7 +144,7 @@ def update_step_order(request):
     except (json.JSONDecodeError, TypeError, ValueError, AttributeError):
         return JsonResponse({"status": "error", "message": "Dati non validi"}, status=400)
 
-    steps = Step.objects.in_bulk(step_ids)
+    steps = Step.objects.filter(procedura__owner=request.user).in_bulk(step_ids)
     if not steps:
         return JsonResponse({"status": "error", "message": "Nessuno step trovato"}, status=400)
 

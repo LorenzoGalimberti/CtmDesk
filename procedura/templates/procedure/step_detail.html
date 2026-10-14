@@ -94,12 +94,14 @@
 
     <!-- Pulsanti di azione -->
     <div class="mt-4 d-flex gap-2 justify-content-center">
+        {% if step.procedura.owner == user %}
         <a href="{% url 'step-update' step.id %}" class="btn btn-warning">
             <i class="bi bi-pencil-square"></i> Modifica
         </a>
         <a href="{% url 'step-delete' step.id %}" class="btn btn-danger">
             <i class="bi bi-trash"></i> Elimina
         </a>
+        {% endif %}
         <a href="{% url 'procedura-detail' step.procedura.id %}" class="btn btn-secondary">
             <i class="bi bi-arrow-left"></i> Torna alla procedura
         </a>
