@@ -91,3 +91,37 @@ class StepDeleteView(DeleteView):
     model = Step
     template_name = "procedure/step_confirm_delete.html"
     success_url = reverse_lazy('step-list')
+
+
+# API per il riordino degli step (drag and drop)
+import json
+from django.db import transaction
+from django.http import JsonResponse
+from django.views.decorators.http import require_POST
+
+
+@require_POST
+def update_step_order(request):
+    """Salva il nuovo ordine degli step. Riceve {"step_order": [id, id, ...]}."""
+    try:
+        data = json.loads(request.body)
+        step_ids = [int(i) for i in data.get("step_order", [])]
+    except (json.JSONDecodeError, TypeError, ValueError, AttributeError):
+        return JsonResponse({"status": "error", "message": "Dati non validi"}, status=400)
+
+    steps = Step.objects.in_bulk(step_ids)
+    if not steps:
+        return JsonResponse({"status": "error", "message": "Nessuno step trovato"}, status=400)
+
+    with transaction.atomic():
+        for index, step_id in enumerate(step_ids):
+            step = steps.get(step_id)
+            if step is not None and step.ordine != index:
+                step.ordine = index
+                step.save(update_fields=["ordine"])
+
+    return JsonResponse({
+        "status": "ok",
+        "message": f"Aggiornati {len(steps)} step",
+        "updated_count": len(steps),
+    })

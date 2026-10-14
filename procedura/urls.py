@@ -1,8 +1,8 @@
 from django.urls import path
-from procedure.views import update_step_order
 from .views import (
     ProceduraListView, ProceduraDetailView, ProceduraCreateView, ProceduraUpdateView, ProceduraDeleteView,
-    StepListView, StepDetailView, StepCreateView, StepUpdateView, StepDeleteView
+    StepListView, StepDetailView, StepCreateView, StepUpdateView, StepDeleteView,
+    update_step_order,
 )
 
 urlpatterns = [
