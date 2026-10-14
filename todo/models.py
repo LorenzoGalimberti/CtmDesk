@@ -54,7 +54,7 @@ class Task(models.Model):
         self.save()
 
     def is_due(self):
-        return self.data_creazione < datetime.now().date()
+        return bool(self.data_creazione) and self.data_creazione < datetime.now().date()
     
     @property
     def icon_class(self):
