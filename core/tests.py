@@ -347,3 +347,66 @@ class IsolamentoErroriHomeTests(BaseTestCase):
                          [{'cliente__nome': 'ACME', 'count': 1}])
         ricerca = self.client.get(reverse('global_search'), {'q': 'Evento'})
         self.assertEqual([r['title'] for r in ricerca.json()['results']], ['Evento mio'])
+
+
+class DiarioCondivisioneTests(BaseTestCase):
+    def setUp(self):
+        super().setUp()
+        from datetime import datetime
+        from django.utils import timezone
+        from diario.models import Diario
+        User = get_user_model()
+        self.altro = User.objects.create_user('altro', password='x')
+        self.terzo = User.objects.create_user('terzo', password='x')
+        oggi = timezone.localdate()
+        self.giorno = (oggi.year, oggi.month, oggi.day)
+        quando = timezone.make_aware(datetime(oggi.year, oggi.month, oggi.day, 12, 0))
+        nuova = lambda titolo, utente: Diario.objects.create(
+            titolo=titolo, contenuto='testo', data_creazione=quando, owner=utente)
+        self.mia = nuova('Mia', self.user)
+        self.privata_altrui = nuova('Privata altrui', self.altro)
+        self.con_me = nuova('Condivisa con me', self.altro)
+        self.con_me.condiviso_con.add(self.user)
+        self.con_terzo = nuova('Condivisa con terzo', self.altro)
+        self.con_terzo.condiviso_con.add(self.terzo)
+
+    def test_lista_e_giorno_mostrano_mie_e_condivise_con_me(self):
+        lista = self.client.get(reverse('diario:diario_list'))
+        self.assertEqual({d.titolo for d in lista.context['diari']}, {'Mia', 'Condivisa con me'})
+        giorno = self.client.get(reverse('diario:diario_del_giorno', args=self.giorno))
+        self.assertEqual({n.titolo for n in giorno.context['note']}, {'Mia', 'Condivisa con me'})
+
+    def test_note_non_condivise_con_me_non_si_aprono(self):
+        for nota in (self.privata_altrui, self.con_terzo):
+            for nome in ['dettaglio_diario', 'scarica_nota_pdf', 'aggiorna_diario', 'cancella_diario']:
+                with self.subTest(nota=nota.titolo, vista=nome):
+                    risposta = self.client.get(reverse('diario:' + nome, args=[nota.pk]))
+                    self.assertEqual(risposta.status_code, 404)
+
+    def test_nota_condivisa_con_me_si_legge_ma_non_si_tocca(self):
+        from diario.models import Diario
+        pk = self.con_me.pk
+        self.assertEqual(self.client.get(reverse('diario:dettaglio_diario', args=[pk])).status_code, 200)
+        self.assertEqual(self.client.get(reverse('diario:scarica_nota_pdf', args=[pk])).status_code, 200)
+        self.assertEqual(self.client.get(reverse('diario:aggiorna_diario', args=[pk])).status_code, 404)
+        self.assertEqual(self.client.get(reverse('diario:cancella_diario', args=[pk])).status_code, 404)
+        self.assertTrue(Diario.objects.filter(pk=pk).exists())
+
+    def test_creare_una_nota_condivisa(self):
+        from diario.models import Diario
+        self.client.post(reverse('diario:nuovo_diario', args=self.giorno),
+                         {'titolo': 'Nuova', 'contenuto': 'x', 'condiviso_con': [self.altro.pk]})
+        nota = Diario.objects.get(titolo='Nuova')
+        self.assertEqual(nota.owner, self.user)
+        self.assertEqual(list(nota.condiviso_con.all()), [self.altro])
+
+    def test_modificare_la_condivisione(self):
+        self.client.post(reverse('diario:aggiorna_diario', args=[self.mia.pk]),
+                         {'titolo': 'Mia', 'contenuto': 'testo', 'condiviso_con': [self.terzo.pk]})
+        self.assertEqual(list(self.mia.condiviso_con.all()), [self.terzo])
+
+    def test_il_form_non_offre_me_stesso(self):
+        risposta = self.client.get(reverse('diario:nuovo_diario', args=self.giorno))
+        utenti = risposta.context['form'].fields['condiviso_con'].queryset
+        self.assertNotIn(self.user, utenti)
+        self.assertIn(self.altro, utenti)

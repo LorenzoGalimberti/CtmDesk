@@ -216,6 +216,26 @@
                             {{ form.contenuto }}
                         </div>
                         
+                        <!-- Condivisione -->
+                        <div class="form-group mb-4">
+                            <label class="form-label">
+                                <i class="bi bi-people-fill me-2"></i>Condividi con
+                            </label>
+                            <div class="cliente-container">
+                                <div class="row row-cols-1 row-cols-md-2 g-3">
+                                    {% for checkbox in form.condiviso_con %}
+                                    <div class="col">
+                                        <div class="form-check">
+                                            {{ checkbox }}
+                                        </div>
+                                    </div>
+                                    {% empty %}
+                                    <p class="text-muted small mb-0">Non ci sono altri utenti.</p>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        </div>
+
                         <!-- Clienti -->
                         <div class="form-group">
                             <label for="id_clienti" class="form-label">

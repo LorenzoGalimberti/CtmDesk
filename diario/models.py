@@ -19,6 +19,10 @@ class Diario(models.Model):
         verbose_name='Proprietario',
     )
     contenuto = models.TextField()
+    condiviso_con = models.ManyToManyField(
+        settings.AUTH_USER_MODEL, blank=True, related_name='diari_condivisi',
+        verbose_name='Condivisa con',
+    )
     data_creazione = models.DateTimeField()
     tags = models.ManyToManyField(Tag, related_name='diari', blank=True)  # Manteniamo per retrocompatibilità
     clienti = models.ManyToManyField(Cliente, related_name='diari', blank=True)  # Aggiungiamo relazione con i clienti

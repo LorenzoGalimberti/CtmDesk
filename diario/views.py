@@ -16,9 +16,14 @@ from reportlab.lib.enums import TA_LEFT, TA_CENTER, TA_RIGHT, TA_JUSTIFY
 import re
 import html
 
+def visibili(user):
+    """Le note che l'utente può leggere: le sue e quelle condivise con lui."""
+    return Diario.objects.filter(Q(owner=user) | Q(condiviso_con=user)).distinct()
+
+
 def diario_list(request):
     query = request.GET.get('q')  # Ottieni il parametro di ricerca
-    diari = Diario.objects.all().order_by('-data_creazione')  # Recupera tutti i diari
+    diari = visibili(request.user).order_by('-data_creazione')  # Recupera tutti i diari
 
     if query:  # Se esiste una query
         diari = diari.filter(
@@ -35,7 +40,7 @@ def nuovo_diario(request, anno, mese, giorno):
     giorno_corrente = timezone.make_aware(giorno_naive)
 
     if request.method == 'POST':
-        form = DiarioForm(request.POST)
+        form = DiarioForm(request.POST, user=request.user)
         if form.is_valid():
             diario = form.save(commit=False)
             diario.data_creazione = giorno_corrente
@@ -45,7 +50,7 @@ def nuovo_diario(request, anno, mese, giorno):
             form.save_m2m()
             return redirect('diario:diario_del_giorno', anno=anno, mese=mese, giorno=giorno)
     else:
-        form = DiarioForm()
+        form = DiarioForm(user=request.user)
 
     return render(request, 'nuovo_diario.html', {'form': form, 'giorno': giorno_corrente})
 
@@ -58,7 +63,7 @@ def diario_del_giorno(request, anno, mese, giorno):
     giorno_corrente = timezone.make_aware(giorno_naive)
 
     # Filtra le note per quel giorno
-    note = Diario.objects.filter(
+    note = visibili(request.user).filter(
         data_creazione__gte=giorno_corrente,
         data_creazione__lt=giorno_corrente + timedelta(days=1)
     )
@@ -76,17 +81,17 @@ def diario_del_giorno(request, anno, mese, giorno):
 
 
 def dettaglio_diario(request, pk):
-    nota = get_object_or_404(Diario, pk=pk)
+    nota = get_object_or_404(visibili(request.user), pk=pk)
     today = date.today()  # Aggiungi la data corrente al contesto
 
     return render(request, 'dettaglio_diario.html', {'nota': nota, 'today': today})
 
 
 def aggiorna_diario(request, pk):
-    nota = get_object_or_404(Diario, pk=pk)
+    nota = get_object_or_404(Diario, pk=pk, owner=request.user)
     
     if request.method == 'POST':
-        form = DiarioForm(request.POST, instance=nota)
+        form = DiarioForm(request.POST, instance=nota, user=request.user)
         if form.is_valid():
             # Salva la nota senza salvare subito le relazioni Many-to-Many
             diario = form.save(commit=False)
@@ -99,15 +104,16 @@ def aggiorna_diario(request, pk):
             nota.clienti.add(*selected_clienti)  # Aggiungi i nuovi clienti selezionati
             
             diario.save()  # Salva la nota con le relazioni aggiornate
+            form.save_m2m()  # Salva anche la condivisione
             return redirect('diario:dettaglio_diario', pk=nota.pk)
     else:
-        form = DiarioForm(instance=nota)
+        form = DiarioForm(instance=nota, user=request.user)
 
     return render(request, 'aggiorna_diario.html', {'form': form, 'nota': nota})
 
 
 def cancella_diario(request, pk):
-    nota = get_object_or_404(Diario, pk=pk)  # Recupera la nota da cancellare
+    nota = get_object_or_404(Diario, pk=pk, owner=request.user)  # Recupera la nota da cancellare
 
     # Salva la data della nota per il redirect
     data_creazione = nota.data_creazione
@@ -122,7 +128,7 @@ def cancella_diario(request, pk):
 
 def scarica_nota_pdf(request, pk):
     """Vista per scaricare la nota come PDF con formattazione HTML"""
-    nota = get_object_or_404(Diario, pk=pk)
+    nota = get_object_or_404(visibili(request.user), pk=pk)
     
     # Crea la risposta HTTP per il PDF
     response = HttpResponse(content_type='application/pdf')

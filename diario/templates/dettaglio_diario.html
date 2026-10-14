@@ -192,6 +192,8 @@
                         <div class="nota-meta">
                             <i class="bi bi-calendar-event me-2"></i>
                             {{ nota.data_creazione|date:"d M Y, H:i" }}
+                            <span class="ms-3"><i class="bi bi-person me-1"></i>{{ nota.owner.get_username|default:"-" }}</span>
+                            {% if nota.owner == user and nota.condiviso_con.exists %}<span class="badge bg-info text-dark ms-2">Condivisa con: {% for u in nota.condiviso_con.all %}{{ u.get_full_name|default:u.get_username }}{% if not forloop.last %}, {% endif %}{% endfor %}</span>{% endif %}
                         </div>
                     </div>
 
@@ -245,6 +247,7 @@
                                 Scarica PDF
                             </a>
                             
+                            {% if nota.owner == user %}
                             <a href="{% url 'diario:aggiorna_diario' nota.pk %}" 
                                class="btn action-btn edit-btn">
                                 <i class="bi bi-pencil-square me-2"></i>
@@ -258,6 +261,7 @@
                                 <i class="bi bi-trash me-2"></i>
                                 Elimina
                             </button>
+                            {% endif %}
                         </div>
                     </div>
                 </div>
