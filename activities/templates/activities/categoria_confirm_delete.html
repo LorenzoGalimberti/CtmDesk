@@ -1,0 +1,80 @@
+{% extends "base.html" %}
+
+{% block title %}Elimina Categoria - {{ categoria.nome }}{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <!-- Breadcrumb -->
+    <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{% url 'activities-dashboard' %}">Dashboard</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'categoria-list' %}">Categorie</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'categoria-detail' categoria.pk %}">{{ categoria.nome }}</a></li>
+            <li class="breadcrumb-item active">Elimina</li>
+        </ol>
+    </nav>
+
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow border-danger">
+                <div class="card-header bg-danger text-white">
+                    <h4 class="mb-0">
+                        <i class="bi bi-exclamation-triangle"></i> Conferma Eliminazione
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <h5 class="text-danger mb-3">Sei sicuro di voler eliminare questa categoria?</h5>
+
+                    <div class="d-flex align-items-center p-3 bg-light rounded mb-4">
+                        <i class="bi {{ categoria.icona }} fs-2 me-3" style="color: {{ categoria.colore }};"></i>
+                        <div>
+                            <strong>{{ categoria.nome }}</strong>
+                            {% if categoria.descrizione %}
+                                <br><small class="text-muted">{{ categoria.descrizione|truncatewords:20 }}</small>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    {% if categoria.attivita_count > 0 %}
+                    <div class="alert alert-danger" role="alert">
+                        <h6 class="alert-heading">
+                            <i class="bi bi-exclamation-circle"></i> Attenzione: attività associate
+                        </h6>
+                        <p class="mb-2">
+                            Questa categoria contiene <strong>{{ categoria.attivita_count }} attività</strong>
+                            ({{ categoria.attivita_aperte_count }} aperte).
+                        </p>
+                        <p class="mb-0">
+                            <strong>Eliminando la categoria verranno eliminate anche tutte le sue attività,
+                            con i relativi task e allegati.</strong>
+                        </p>
+                    </div>
+                    <p class="small text-muted">
+                        Alternativa consigliata:
+                        <a href="{% url 'categoria-update' categoria.pk %}">disattiva la categoria</a>
+                        invece di eliminarla.
+                    </p>
+                    {% else %}
+                    <div class="alert alert-info" role="alert">
+                        <i class="bi bi-info-circle"></i>
+                        Questa categoria non ha attività associate. L'eliminazione è sicura.
+                    </div>
+                    {% endif %}
+
+                    <form method="post" class="mt-4">
+                        {% csrf_token %}
+                        <div class="d-flex gap-3 justify-content-end">
+                            <a href="{% url 'categoria-detail' categoria.pk %}" class="btn btn-outline-secondary">
+                                <i class="bi bi-arrow-left"></i> Annulla
+                            </a>
+                            <button type="submit" class="btn btn-danger">
+                                <i class="bi bi-trash"></i> Sì, elimina definitivamente
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

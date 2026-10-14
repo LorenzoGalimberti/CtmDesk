@@ -1,0 +1,119 @@
+{% extends "base.html" %}
+
+{% block title %}Categoria - {{ categoria.nome }}{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <!-- Breadcrumb -->
+    <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{% url 'activities-dashboard' %}">Dashboard</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'categoria-list' %}">Categorie</a></li>
+            <li class="breadcrumb-item active">{{ categoria.nome }}</li>
+        </ol>
+    </nav>
+
+    <!-- Intestazione -->
+    <div class="d-flex justify-content-between align-items-start mb-4">
+        <div>
+            <h2 class="mb-1">
+                <i class="bi {{ categoria.icona }}" style="color: {{ categoria.colore }};"></i>
+                {{ categoria.nome }}
+                {% if not categoria.attiva %}
+                    <span class="badge bg-secondary fs-6">Non attiva</span>
+                {% endif %}
+            </h2>
+            {% if categoria.descrizione %}
+                <p class="text-muted mb-0">{{ categoria.descrizione }}</p>
+            {% else %}
+                <p class="text-muted fst-italic mb-0">Nessuna descrizione</p>
+            {% endif %}
+        </div>
+        <div class="btn-group">
+            <a href="{% url 'categoria-update' categoria.pk %}" class="btn btn-outline-warning">
+                <i class="bi bi-pencil"></i> Modifica
+            </a>
+            <a href="{% url 'categoria-delete' categoria.pk %}" class="btn btn-outline-danger">
+                <i class="bi bi-trash"></i> Elimina
+            </a>
+        </div>
+    </div>
+
+    <!-- Statistiche -->
+    <div class="row mb-4">
+        <div class="col-md-4 mb-3">
+            <div class="card text-center h-100">
+                <div class="card-body">
+                    <h3 class="text-primary mb-1">{{ categoria.attivita_count }}</h3>
+                    <small class="text-muted">Attività totali</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4 mb-3">
+            <div class="card text-center h-100">
+                <div class="card-body">
+                    <h3 class="text-success mb-1">{{ categoria.attivita_aperte_count }}</h3>
+                    <small class="text-muted">Attività aperte</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4 mb-3">
+            <div class="card text-center h-100">
+                <div class="card-body">
+                    <h3 class="text-secondary mb-1">{{ categoria.ordinamento }}</h3>
+                    <small class="text-muted">Ordine di visualizzazione</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Attività recenti -->
+    <div class="card shadow-sm mb-4">
+        <div class="card-header">
+            <h5 class="mb-0"><i class="bi bi-clock-history"></i> Attività recenti</h5>
+        </div>
+        {% if attivita_recenti %}
+        <div class="table-responsive">
+            <table class="table table-hover mb-0 align-middle">
+                <thead>
+                    <tr>
+                        <th>Flusso</th>
+                        <th>Richiedente</th>
+                        <th>Stato</th>
+                        <th>Creata il</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for attivita in attivita_recenti %}
+                    <tr>
+                        <td>
+                            <a href="{% url 'attivita-detail' attivita.pk %}" class="text-decoration-none">
+                                {{ attivita.nome_flusso }}
+                            </a>
+                        </td>
+                        <td>{{ attivita.richiedente.nome_completo }}</td>
+                        <td>
+                            {% if attivita.is_aperta %}
+                                <span class="badge bg-success">{{ attivita.get_stato_display }}</span>
+                            {% else %}
+                                <span class="badge bg-secondary">{{ attivita.get_stato_display }}</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ attivita.data_creazione|date:"d/m/Y" }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="card-body text-muted fst-italic">
+            Nessuna attività in questa categoria.
+        </div>
+        {% endif %}
+    </div>
+
+    <a href="{% url 'categoria-list' %}" class="btn btn-outline-secondary">
+        <i class="bi bi-arrow-left"></i> Torna alle categorie
+    </a>
+</div>
+{% endblock %}
