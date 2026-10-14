@@ -67,6 +67,7 @@ def add_task(request):
                 task.data_creazione = date.today()
             # I task creati manualmente sono sempre di tipo 'manual'
             task.task_type = 'manual'
+            task.owner = request.user
             task.save()
             return redirect('todo:task_list')
     else:

@@ -10,7 +10,10 @@ def errore_create(request):
     if request.method == 'POST':
         form = ErroreForm(request.POST)
         if form.is_valid():
-            form.save()
+            errore = form.save(commit=False)
+            errore.owner = request.user
+            errore.save()
+            form.save_m2m()
             return redirect('errore_list')
     else:
         form = ErroreForm()

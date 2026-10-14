@@ -26,7 +26,10 @@ def aggiungi_evento(request):
         form = EventoForm(request.POST)
         if form.is_valid():
             # Salva l'evento
-            evento = form.save()
+            evento = form.save(commit=False)
+            evento.owner = request.user
+            evento.save()
+            form.save_m2m()
             
             # Crea automaticamente il task nel todo
             try:
@@ -37,6 +40,7 @@ def aggiungi_evento(request):
                                f"Inizio: {evento.data_inizio.strftime('%d/%m/%Y alle %H:%M')}\n"
                                f"Fine: {evento.data_fine.strftime('%d/%m/%Y alle %H:%M')}",
                     cliente=evento.cliente,
+                    owner=request.user,
                     data_creazione=evento.data_inizio.date(),
                     completed=False,
                     archiviato=False

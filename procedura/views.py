@@ -31,6 +31,10 @@ class ProceduraCreateView(CreateView):
     fields = ['nome', 'ambiente', 'cliente', 'tipologia']
     success_url = reverse_lazy('procedura-list')
 
+    def form_valid(self, form):
+        form.instance.owner = self.request.user
+        return super().form_valid(form)
+
 class ProceduraUpdateView(UpdateView):
     model = Procedura
     template_name = "procedure/procedura_form.html"

@@ -171,3 +171,41 @@ class StepTests(BaseTestCase):
         self._riordina(nuovo)
         self.client.get(reverse('step-detail', args=[self.s3.pk]))
         self.assertEqual(self._ordine_salvato(), nuovo)
+
+
+class ProprietarioTests(BaseTestCase):
+    """Quello che crei da utente loggato ne diventa il proprietario."""
+
+    def test_attivita_e_task_automatico(self):
+        richiedente = Richiedente.objects.create(
+            nome='Mario', cognome='Rossi', cliente=self.cliente
+        )
+        categoria = Categoria.objects.create(nome='Test')
+        self.client.post(reverse('attivita-create'), {
+            'nome_flusso': 'Flusso nuovo', 'richiedente': richiedente.pk,
+            'categoria': categoria.pk, 'stato': 'aperta',
+            'descrizione': '', 'note': '',
+        })
+        attivita = Attivita.objects.get(nome_flusso='Flusso nuovo')
+        self.assertEqual(attivita.owner, self.user)
+        self.assertEqual(Task.objects.get(attivita=attivita).owner, self.user)
+
+    def test_task_manuale(self):
+        self.client.post(reverse('todo:add_task'), {
+            'title': 'Prova', 'cliente': self.cliente.pk, 'description': 'x',
+        })
+        self.assertEqual(Task.objects.get(title='Prova').owner, self.user)
+
+    def test_procedura(self):
+        self.client.post(reverse('procedura-create'), {
+            'nome': 'Nuova proc', 'cliente': self.cliente.pk,
+        })
+        self.assertEqual(Procedura.objects.get(nome='Nuova proc').owner, self.user)
+
+    def test_diario(self):
+        from diario.models import Diario
+        self.client.post(
+            reverse('diario:nuovo_diario', args=[2026, 1, 15]),
+            {'titolo': 'Nota', 'contenuto': 'testo'},
+        )
+        self.assertEqual(Diario.objects.get(titolo='Nota').owner, self.user)

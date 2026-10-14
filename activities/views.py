@@ -35,6 +35,7 @@ def create_task_from_activity(attivita):
                        f"Descrizione: {attivita.descrizione or 'Nessuna descrizione'}",
             cliente=attivita.richiedente.cliente,
             attivita=attivita,
+            owner=attivita.owner,
             task_type='activity',
             data_creazione=date.today(),
             completed=False
@@ -141,6 +142,7 @@ class AttivitaCreateView(CreateView):
     success_url = reverse_lazy('attivita-list')
     
     def form_valid(self, form):
+        form.instance.owner = self.request.user
         response = super().form_valid(form)
         
         # Crea automaticamente un task to-do per questa attività

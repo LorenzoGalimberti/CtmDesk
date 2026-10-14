@@ -39,6 +39,7 @@ def nuovo_diario(request, anno, mese, giorno):
         if form.is_valid():
             diario = form.save(commit=False)
             diario.data_creazione = giorno_corrente
+            diario.owner = request.user
             diario.save()
             # Salva le relazioni Many-to-Many (tag e clienti)
             form.save_m2m()
