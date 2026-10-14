@@ -76,11 +76,12 @@ class AttivitaTaskTests(BaseTestCase):
         )
         categoria = Categoria.objects.create(nome='Test')
         self.attivita = Attivita.objects.create(
-            nome_flusso='Flusso', richiedente=richiedente, categoria=categoria
+            nome_flusso='Flusso', richiedente=richiedente, categoria=categoria,
+            owner=self.user,
         )
         self.task = Task.objects.create(
             title='Lavorare', attivita=self.attivita,
-            task_type='activity', data_creazione=date.today(),
+            task_type='activity', data_creazione=date.today(), owner=self.user,
         )
 
     def test_chiudere_attivita_completa_i_task(self):
@@ -209,3 +210,46 @@ class ProprietarioTests(BaseTestCase):
             {'titolo': 'Nota', 'contenuto': 'testo'},
         )
         self.assertEqual(Diario.objects.get(titolo='Nota').owner, self.user)
+
+
+class IsolamentoAttivitaTests(BaseTestCase):
+    def setUp(self):
+        super().setUp()
+        altro = get_user_model().objects.create_user('altro', password='x')
+        richiedente = Richiedente.objects.create(
+            nome='Mario', cognome='Rossi', cliente=self.cliente
+        )
+        categoria = Categoria.objects.create(nome='Test')
+        self.mia = Attivita.objects.create(
+            nome_flusso='Mia', richiedente=richiedente, categoria=categoria, owner=self.user
+        )
+        self.altrui = Attivita.objects.create(
+            nome_flusso='Altrui', richiedente=richiedente, categoria=categoria, owner=altro
+        )
+
+    def test_la_lista_mostra_solo_le_mie(self):
+        risposta = self.client.get(reverse('attivita-list'))
+        nomi = [a.nome_flusso for a in risposta.context['attivita']]
+        self.assertEqual(nomi, ['Mia'])
+
+    def test_non_posso_aprire_modificare_o_eliminare_quelle_altrui(self):
+        for nome in ['attivita-detail', 'attivita-update', 'attivita-delete']:
+            with self.subTest(vista=nome):
+                url = reverse(nome, args=[self.altrui.pk])
+                self.assertEqual(self.client.get(url).status_code, 404)
+        self.client.post(reverse('attivita-delete', args=[self.altrui.pk]))
+        self.assertTrue(Attivita.objects.filter(pk=self.altrui.pk).exists())
+
+    def test_non_posso_chiudere_quelle_altrui(self):
+        risposta = self.client.get(reverse('attivita-chiudi', args=[self.altrui.pk]))
+        self.assertEqual(risposta.status_code, 404)
+        self.altrui.refresh_from_db()
+        self.assertEqual(self.altrui.stato, 'aperta')
+
+    def test_la_dashboard_conta_solo_le_mie(self):
+        risposta = self.client.get(reverse('activities-dashboard'))
+        self.assertEqual(risposta.context['totale_attivita'], 1)
+
+    def test_le_mie_si_aprono(self):
+        risposta = self.client.get(reverse('attivita-detail', args=[self.mia.pk]))
+        self.assertEqual(risposta.status_code, 200)

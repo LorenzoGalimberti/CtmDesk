@@ -10,6 +10,7 @@ from django.views.decorators.http import require_POST
 import os
 from .models import Attivita, Richiedente, Categoria, AllegatoAttivita
 from .forms import AttivitaForm, RichiedenteForm, CategoriaForm, AllegatoAttivitaForm
+from core.mixins import SoloMieiMixin
 
 # Importa Task per creare task automatici
 try:
@@ -53,7 +54,7 @@ class AttivitaListView(ListView):
     paginate_by = 20
     
     def get_queryset(self):
-        queryset = Attivita.objects.select_related('richiedente', 'richiedente__cliente', 'categoria')
+        queryset = Attivita.objects.filter(owner=self.request.user).select_related('richiedente', 'richiedente__cliente', 'categoria')
         
         # Filtro per stato
         stato_filter = self.request.GET.get('stato')
@@ -94,7 +95,7 @@ class AttivitaListView(ListView):
         context['search_query'] = self.request.GET.get('search', '')
         return context
 
-class AttivitaDetailView(DetailView):
+class AttivitaDetailView(SoloMieiMixin, DetailView):
     model = Attivita
     template_name = "activities/attivita_detail.html"
     context_object_name = "attivita"
@@ -161,7 +162,7 @@ class AttivitaCreateView(CreateView):
         
         return response
 
-class AttivitaUpdateView(UpdateView):
+class AttivitaUpdateView(SoloMieiMixin, UpdateView):
     model = Attivita
     form_class = AttivitaForm
     template_name = "activities/attivita_form.html"
@@ -171,7 +172,7 @@ class AttivitaUpdateView(UpdateView):
         messages.success(self.request, 'Attività aggiornata con successo!')
         return super().form_valid(form)
 
-class AttivitaDeleteView(DeleteView):
+class AttivitaDeleteView(SoloMieiMixin, DeleteView):
     model = Attivita
     template_name = "activities/attivita_confirm_delete.html"
     success_url = reverse_lazy('attivita-list')
@@ -183,7 +184,7 @@ class AttivitaDeleteView(DeleteView):
 # Views per azioni specifiche
 def chiudi_attivita(request, pk):
     """Vista per chiudere un'attività"""
-    attivita = get_object_or_404(Attivita, pk=pk)
+    attivita = get_object_or_404(Attivita, pk=pk, owner=request.user)
     if hasattr(attivita, 'is_aperta') and attivita.is_aperta:
         attivita.chiudi_attivita()
         
@@ -199,7 +200,7 @@ def chiudi_attivita(request, pk):
 
 def riapri_attivita(request, pk):
     """Vista per riaprire un'attività"""
-    attivita = get_object_or_404(Attivita, pk=pk)
+    attivita = get_object_or_404(Attivita, pk=pk, owner=request.user)
     if hasattr(attivita, 'is_chiusa') and attivita.is_chiusa:
         attivita.riapri_attivita()
         
@@ -239,7 +240,7 @@ def riapri_attivita(request, pk):
 @require_POST
 def carica_allegato(request, attivita_id):
     """Vista per caricare un allegato per un'attività"""
-    attivita = get_object_or_404(Attivita, id=attivita_id)
+    attivita = get_object_or_404(Attivita, id=attivita_id, owner=request.user)
     
     if 'file' not in request.FILES:
         messages.error(request, 'Nessun file selezionato.')
@@ -258,7 +259,7 @@ def carica_allegato(request, attivita_id):
 
 def scarica_allegato(request, allegato_id):
     """Vista per scaricare un allegato"""
-    allegato = get_object_or_404(AllegatoAttivita, id=allegato_id)
+    allegato = get_object_or_404(AllegatoAttivita, id=allegato_id, attivita__owner=request.user)
     
     if not os.path.exists(allegato.file.path):
         raise Http404("File non trovato")
@@ -270,7 +271,7 @@ def scarica_allegato(request, allegato_id):
 
 def anteprima_allegato(request, allegato_id):
     """Vista per visualizzare l'anteprima di un allegato"""
-    allegato = get_object_or_404(AllegatoAttivita, id=allegato_id)
+    allegato = get_object_or_404(AllegatoAttivita, id=allegato_id, attivita__owner=request.user)
     
     if not os.path.exists(allegato.file.path):
         raise Http404("File non trovato")
@@ -327,7 +328,7 @@ def anteprima_allegato(request, allegato_id):
 
 def elimina_allegato(request, allegato_id):
     """Vista per eliminare un allegato"""
-    allegato = get_object_or_404(AllegatoAttivita, id=allegato_id)
+    allegato = get_object_or_404(AllegatoAttivita, id=allegato_id, attivita__owner=request.user)
     attivita_id = allegato.attivita.id
     nome_file = allegato.nome_originale
     
@@ -506,19 +507,20 @@ def dashboard_activities(request):
     """Dashboard per visualizzare statistiche delle attività"""
     from core.models import Cliente
     
+    mie = Attivita.objects.filter(owner=request.user)
     context = {
-        'totale_attivita': Attivita.objects.count(),
-        'attivita_aperte': Attivita.objects.filter(stato='aperta').count(),
-        'attivita_chiuse': Attivita.objects.filter(stato='chiusa').count(),
+        'totale_attivita': mie.count(),
+        'attivita_aperte': mie.filter(stato='aperta').count(),
+        'attivita_chiuse': mie.filter(stato='chiusa').count(),
         'totale_richiedenti': Richiedente.objects.filter(attivo=True).count(),
         'totale_categorie': Categoria.objects.filter(attiva=True).count(),
         'attivita_per_cliente': Cliente.objects.annotate(
-            num_attivita=Count('richiedenti__attivita')
+            num_attivita=Count('richiedenti__attivita', filter=Q(richiedenti__attivita__owner=request.user))
         ).order_by('-num_attivita')[:5],
         'attivita_per_categoria': Categoria.objects.annotate(
-            num_attivita=Count('attivita')
+            num_attivita=Count('attivita', filter=Q(attivita__owner=request.user))
         ).filter(attiva=True).order_by('-num_attivita')[:5],
-        'attivita_recenti': Attivita.objects.select_related(
+        'attivita_recenti': mie.select_related(
             'richiedente', 'richiedente__cliente', 'categoria'
         ).order_by('-data_creazione')[:10]
     }
