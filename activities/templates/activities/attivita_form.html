@@ -1,0 +1,429 @@
+<!-- activities/templates/activities/attivita_form.html -->
+{% extends "base.html" %}
+
+{% block title %}
+    {% if form.instance.pk %}
+        Modifica Attività - {{ form.instance.nome_flusso }}
+    {% else %}
+        Crea Nuova Attività
+    {% endif %}
+{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <!-- Breadcrumb -->
+    <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{% url 'activities-dashboard' %}">Dashboard</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'attivita-list' %}">Attività</a></li>
+            <li class="breadcrumb-item active">
+                {% if form.instance.pk %}Modifica{% else %}Crea{% endif %}
+            </li>
+        </ol>
+    </nav>
+
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <h1 class="display-6 text-primary">
+                <i class="bi bi-{% if form.instance.pk %}pencil-square{% else %}plus-circle{% endif %}"></i>
+                {% if form.instance.pk %}
+                    Modifica Attività
+                {% else %}
+                    Crea Nuova Attività
+                {% endif %}
+            </h1>
+            {% if form.instance.pk %}
+                <p class="text-muted">Modifica i dettagli dell'attività esistente</p>
+            {% else %}
+                <p class="text-muted">Compila i campi per creare una nuova attività</p>
+            {% endif %}
+        </div>
+        <div class="col-md-4 text-md-end">
+            <a href="{% url 'attivita-list' %}" class="btn btn-outline-secondary">
+                <i class="bi bi-arrow-left"></i> Torna alla Lista
+            </a>
+        </div>
+    </div>
+
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <!-- Card principale del form -->
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">
+                        <i class="bi bi-form"></i> Dettagli Attività
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <!-- Messaggi di errore -->
+                    {% if form.non_field_errors %}
+                        <div class="alert alert-danger" role="alert">
+                            <i class="bi bi-exclamation-triangle"></i>
+                            {{ form.non_field_errors }}
+                        </div>
+                    {% endif %}
+
+                    <form method="post" novalidate>
+                        {% csrf_token %}
+                        
+                        <!-- Nome Flusso -->
+                        <div class="mb-4">
+                            <label for="{{ form.nome_flusso.id_for_label }}" class="form-label fw-bold">
+                                <i class="bi bi-workflow text-primary"></i> {{ form.nome_flusso.label }}
+                                <span class="text-danger">*</span>
+                            </label>
+                            {{ form.nome_flusso }}
+                            {% if form.nome_flusso.errors %}
+                                <div class="text-danger small mt-1">
+                                    <i class="bi bi-exclamation-circle"></i>
+                                    {{ form.nome_flusso.errors.0 }}
+                                </div>
+                            {% endif %}
+                            <div class="form-text">
+                                Inserisci un nome descrittivo per identificare facilmente il flusso
+                            </div>
+                        </div>
+
+                        <!-- Richiedente -->
+                        <div class="mb-4">
+                            <label for="{{ form.richiedente.id_for_label }}" class="form-label fw-bold">
+                                <i class="bi bi-person text-primary"></i> {{ form.richiedente.label }}
+                                <span class="text-danger">*</span>
+                            </label>
+                            {{ form.richiedente }}
+                            {% if form.richiedente.errors %}
+                                <div class="text-danger small mt-1">
+                                    <i class="bi bi-exclamation-circle"></i>
+                                    {{ form.richiedente.errors.0 }}
+                                </div>
+                            {% endif %}
+                            <div class="form-text">
+                                Seleziona la persona che ha richiesto questa attività
+                                <a href="{% url 'richiedente-create' %}" class="text-decoration-none small" target="_blank">
+                                    <i class="bi bi-plus-circle"></i> Aggiungi nuovo richiedente
+                                </a>
+                            </div>
+                        </div>
+
+                        <!-- Categoria -->
+                        <div class="mb-4">
+                            <label for="{{ form.categoria.id_for_label }}" class="form-label fw-bold">
+                                <i class="bi bi-tags text-primary"></i> {{ form.categoria.label }}
+                                <span class="text-danger">*</span>
+                            </label>
+                            {{ form.categoria }}
+                            {% if form.categoria.errors %}
+                                <div class="text-danger small mt-1">
+                                    <i class="bi bi-exclamation-circle"></i>
+                                    {{ form.categoria.errors.0 }}
+                                </div>
+                            {% endif %}
+                            <div class="form-text">
+                                Seleziona la categoria per organizzare l'attività
+                                <a href="{% url 'categoria-create' %}" class="text-decoration-none small" target="_blank">
+                                    <i class="bi bi-plus-circle"></i> Crea nuova categoria
+                                </a>
+                            </div>
+                        </div>
+
+                        <!-- Stato -->
+                        <div class="mb-4">
+                            <label for="{{ form.stato.id_for_label }}" class="form-label fw-bold">
+                                <i class="bi bi-toggle-on text-primary"></i> {{ form.stato.label }}
+                                <span class="text-danger">*</span>
+                            </label>
+                            {{ form.stato }}
+                            {% if form.stato.errors %}
+                                <div class="text-danger small mt-1">
+                                    <i class="bi bi-exclamation-circle"></i>
+                                    {{ form.stato.errors.0 }}
+                                </div>
+                            {% endif %}
+                            <div class="form-text">
+                                <span class="badge bg-success me-2">Aperta</span> = Attività in corso
+                                <span class="badge bg-secondary">Chiusa</span> = Attività completata
+                            </div>
+                        </div>
+
+                        <!-- Descrizione -->
+                        <div class="mb-4">
+                            <label for="{{ form.descrizione.id_for_label }}" class="form-label fw-bold">
+                                <i class="bi bi-text-paragraph text-primary"></i> {{ form.descrizione.label }}
+                            </label>
+                            {{ form.descrizione }}
+                            {% if form.descrizione.errors %}
+                                <div class="text-danger small mt-1">
+                                    <i class="bi bi-exclamation-circle"></i>
+                                    {{ form.descrizione.errors.0 }}
+                                </div>
+                            {% endif %}
+                            <div class="form-text">
+                                Fornisci una descrizione dettagliata dell'attività da svolgere
+                            </div>
+                        </div>
+
+                        <!-- Note -->
+                        <div class="mb-4">
+                            <label for="{{ form.note.id_for_label }}" class="form-label fw-bold">
+                                <i class="bi bi-sticky text-primary"></i> {{ form.note.label }}
+                            </label>
+                            {{ form.note }}
+                            {% if form.note.errors %}
+                                <div class="text-danger small mt-1">
+                                    <i class="bi bi-exclamation-circle"></i>
+                                    {{ form.note.errors.0 }}
+                                </div>
+                            {% endif %}
+                            <div class="form-text">
+                                Note aggiuntive, considerazioni speciali o istruzioni particolari
+                            </div>
+                        </div>
+
+                        <!-- Pulsanti di azione -->
+                        <div class="d-flex gap-3 justify-content-end">
+                            <a href="{% url 'attivita-list' %}" class="btn btn-outline-secondary btn-lg">
+                                <i class="bi bi-x-circle"></i> Annulla
+                            </a>
+                            <button type="submit" class="btn btn-success btn-lg">
+                                <i class="bi bi-{% if form.instance.pk %}pencil-square{% else %}plus-circle{% endif %}"></i>
+                                {% if form.instance.pk %}
+                                    Aggiorna Attività
+                                {% else %}
+                                    Crea Attività
+                                {% endif %}
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Card informazioni aggiuntive -->
+            {% if form.instance.pk %}
+            <div class="card shadow-sm mt-4">
+                <div class="card-header bg-light">
+                    <h6 class="mb-0">
+                        <i class="bi bi-info-circle"></i> Informazioni Attività
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <small class="text-muted">Data Creazione:</small><br>
+                            <strong>{{ form.instance.data_creazione|date:"d/m/Y alle H:i" }}</strong>
+                        </div>
+                        <div class="col-md-6">
+                            {% if form.instance.data_chiusura %}
+                                <small class="text-muted">Data Chiusura:</small><br>
+                                <strong>{{ form.instance.data_chiusura|date:"d/m/Y alle H:i" }}</strong>
+                            {% else %}
+                                <small class="text-muted">Stato:</small><br>
+                                <span class="badge bg-success">Attività Aperta</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Card suggerimenti -->
+            <div class="card shadow-sm mt-4 border-info">
+                <div class="card-header bg-info text-white">
+                    <h6 class="mb-0">
+                        <i class="bi bi-lightbulb"></i> Suggerimenti
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <ul class="mb-0 small">
+                        <li><strong>Nome Flusso:</strong> Usa nomi descrittivi come "Configurazione Server Produzione" o "Migrazione Database CRM"</li>
+                        <li><strong>Richiedente:</strong> Assicurati che il richiedente sia associato al cliente corretto</li>
+                        <li><strong>Categoria:</strong> Scegli la categoria più appropriata per organizzare e filtrare le attività</li>
+                        <li><strong>Descrizione:</strong> Includi obiettivi, tempistiche e requisiti specifici</li>
+                        <li><strong>Note:</strong> Aggiungi riferimenti a documenti, contatti o risorse utili</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sidebar con informazioni richiedente (solo in modifica) -->
+        {% if form.instance.pk and form.instance.richiedente %}
+        <div class="col-md-4">
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <h6 class="mb-0">
+                        <i class="bi bi-person"></i> Informazioni Richiedente
+                    </h6>
+                </div>
+                <div class="card-body text-center">
+                    <div class="avatar bg-primary text-white rounded-circle d-inline-flex align-items-center justify-content-center mb-3" 
+                         style="width: 60px; height: 60px; font-size: 24px;">
+                        {{ form.instance.richiedente.nome.0 }}{{ form.instance.richiedente.cognome.0 }}
+                    </div>
+                    <h6>{{ form.instance.richiedente.nome_completo }}</h6>
+                    {% if form.instance.richiedente.email %}
+                    <p class="text-muted mb-2">
+                        <i class="bi bi-envelope"></i> {{ form.instance.richiedente.email }}
+                    </p>
+                    {% endif %}
+                    {% if form.instance.richiedente.telefono %}
+                    <p class="text-muted mb-2">
+                        <i class="bi bi-telephone"></i> {{ form.instance.richiedente.telefono }}
+                    </p>
+                    {% endif %}
+                    <span class="badge" 
+                          style="background-color: {{ form.instance.richiedente.cliente.colore_sfondo|default:'#6c757d' }}; color: {{ form.instance.richiedente.cliente.colore_testo|default:'#fff' }};">
+                        {{ form.instance.richiedente.cliente.nome }}
+                    </span>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Toast per messaggi -->
+{% if messages %}
+<div class="position-fixed bottom-0 end-0 p-3" style="z-index: 1050">
+    {% for message in messages %}
+    <div class="toast align-items-center text-white bg-{{ message.tags }} border-0" role="alert" aria-live="assertive" aria-atomic="true">
+        <div class="d-flex">
+            <div class="toast-body">
+                {{ message }}
+            </div>
+            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% endif %}
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Inizializza i toast per i messaggi
+    var toastElList = [].slice.call(document.querySelectorAll('.toast'));
+    var toastList = toastElList.map(function (toastEl) {
+        var toast = new bootstrap.Toast(toastEl);
+        toast.show();
+        return toast;
+    });
+
+    // Auto-resize per textarea
+    const textareas = document.querySelectorAll('textarea');
+    textareas.forEach(textarea => {
+        textarea.addEventListener('input', function() {
+            this.style.height = 'auto';
+            this.style.height = (this.scrollHeight) + 'px';
+        });
+    });
+
+    // Validazione in tempo reale
+    const form = document.querySelector('form');
+    const submitBtn = form.querySelector('button[type="submit"]');
+    const requiredFields = form.querySelectorAll('input[required], select[required]');
+    
+    function validateForm() {
+        let isValid = true;
+        requiredFields.forEach(field => {
+            if (!field.value.trim()) {
+                isValid = false;
+            }
+        });
+        
+        submitBtn.disabled = !isValid;
+        if (isValid) {
+            submitBtn.classList.remove('btn-outline-success');
+            submitBtn.classList.add('btn-success');
+        } else {
+            submitBtn.classList.remove('btn-success');
+            submitBtn.classList.add('btn-outline-success');
+        }
+    }
+
+    // Controlla validità al caricamento
+    validateForm();
+
+    // Controlla validità ad ogni cambiamento
+    requiredFields.forEach(field => {
+        field.addEventListener('input', validateForm);
+        field.addEventListener('change', validateForm);
+    });
+
+    // Animazione di invio form
+    form.addEventListener('submit', function() {
+        submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Salvataggio...';
+        submitBtn.disabled = true;
+    });
+
+    // Conferma prima di uscire se ci sono modifiche non salvate
+    let formChanged = false;
+    const formInputs = form.querySelectorAll('input, select, textarea');
+    
+    formInputs.forEach(input => {
+        input.addEventListener('input', function() {
+            formChanged = true;
+        });
+    });
+
+    window.addEventListener('beforeunload', function(e) {
+        if (formChanged) {
+            e.preventDefault();
+            e.returnValue = '';
+        }
+    });
+
+    // Reset flag quando il form viene inviato
+    form.addEventListener('submit', function() {
+        formChanged = false;
+    });
+});
+</script>
+
+<style>
+/* Stili personalizzati per il form */
+.form-control:focus {
+    border-color: #0d6efd;
+    box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25);
+}
+
+.form-label {
+    margin-bottom: 0.5rem;
+}
+
+.avatar {
+    font-weight: bold;
+}
+
+.card {
+    transition: transform 0.2s ease-in-out;
+}
+
+.card:hover {
+    transform: translateY(-2px);
+}
+
+/* Animazioni per i campi con errori */
+.text-danger {
+    animation: shake 0.5s ease-in-out;
+}
+
+@keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-5px); }
+    75% { transform: translateX(5px); }
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .btn-lg {
+        width: 100%;
+        margin-bottom: 0.5rem;
+    }
+    
+    .d-flex.gap-3 {
+        flex-direction: column;
+    }
+}
+</style>
+{% endblock %}

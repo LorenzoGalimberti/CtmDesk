@@ -1,0 +1,76 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Lista Errori{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    
+    <!-- Esempio di messaggio introduttivo o di filter bar -->
+    
+    <div class="row mb-3">
+        <div class="col">
+            <form method="GET">
+                <div class="input-group">
+                    <input type="text" name="search" class="form-control" placeholder="Cerca per cliente, nota, ecc.">
+                    <button class="btn btn-outline-secondary" type="submit">Cerca</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+
+    <table class="table table-bordered table-hover align-middle">
+        <thead class="table-light">
+            <tr>
+                <th scope="col">ID</th>
+                <th scope="col">Cliente</th>
+                <th scope="col">Data</th>
+                <th scope="col">Livello</th>
+                <th scope="col">Note</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for errore in errori %}
+            <!-- Righe cliccabili con classe personalizzata e data-href -->
+            <tr class="clickable-row" data-href="{% url 'errore_detail' errore.pk %}">
+                <td>{{ errore.id }}</td>
+                <td>{{ errore.cliente }}</td>
+                <td>{{ errore.data }}</td>
+                <td>
+                    <!-- Esempio: colorare il badge in base al livello -->
+                    <span class="badge 
+                        {% if errore.livello == 'Alto' %}
+                            bg-danger
+                        {% elif errore.livello == 'Medio' %}
+                            bg-warning text-dark
+                        {% else %}
+                            bg-success
+                        {% endif %}
+                    ">
+                        {{ errore.livello }}
+                    </span>
+                </td>
+                <td>{{ errore.note }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    
+    <div class="mt-3">
+        <a href="{% url 'errore_create' %}" class="btn btn-success">Aggiungi Nuovo Errore</a>
+    </div>
+</div>
+
+<!-- Script per rendere l'intera riga cliccabile -->
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    document.querySelectorAll(".clickable-row").forEach(function(row){
+        row.addEventListener("click", function(){
+            window.location = row.dataset.href;
+        });
+    });
+});
+</script>
+
+{% endblock %}

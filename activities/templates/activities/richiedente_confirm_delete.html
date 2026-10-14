@@ -1,0 +1,322 @@
+<!-- activities/templates/activities/richiedente_confirm_delete.html -->
+{% extends "base.html" %}
+
+{% block title %}Elimina Richiedente - {{ richiedente.nome_completo }}{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <!-- Breadcrumb -->
+    <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{% url 'activities-dashboard' %}">Dashboard</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'richiedente-list' %}">Richiedenti</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'richiedente-detail' richiedente.pk %}">{{ richiedente.nome_completo|truncatewords:2 }}</a></li>
+            <li class="breadcrumb-item active">Elimina</li>
+        </ol>
+    </nav>
+
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <!-- Card di avviso -->
+            <div class="card shadow border-danger">
+                <div class="card-header bg-danger text-white">
+                    <h4 class="mb-0">
+                        <i class="bi bi-exclamation-triangle"></i> Conferma Eliminazione
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-8">
+                            <h5 class="text-danger mb-3">
+                                Sei sicuro di voler eliminare questo richiedente?
+                            </h5>
+                            
+                            <div class="alert alert-warning" role="alert">
+                                <i class="bi bi-exclamation-triangle-fill"></i>
+                                <strong>Attenzione:</strong> Questa azione non può essere annullata.
+                            </div>
+
+                            <div class="mb-4">
+                                <h6>Richiedente da eliminare:</h6>
+                                <div class="d-flex align-items-center p-3 bg-light rounded">
+                                    <div class="avatar bg-danger text-white rounded-circle me-3 d-flex align-items-center justify-content-center" 
+                                         style="width: 50px; height: 50px; font-size: 20px;">
+                                        {{ richiedente.nome.0 }}{{ richiedente.cognome.0 }}
+                                    </div>
+                                    <div>
+                                        <strong>{{ richiedente.nome_completo }}</strong>
+                                        {% if richiedente.email %}
+                                            <br><small class="text-muted">
+                                                <i class="bi bi-envelope"></i> {{ richiedente.email }}
+                                            </small>
+                                        {% endif %}
+                                        {% if richiedente.telefono %}
+                                            <br><small class="text-muted">
+                                                <i class="bi bi-telephone"></i> {{ richiedente.telefono }}
+                                            </small>
+                                        {% endif %}
+                                        <br><span class="badge" style="background-color: {{ richiedente.cliente.colore_sfondo|default:'#6c757d' }}; color: {{ richiedente.cliente.colore_testo|default:'#fff' }};">
+                                            {{ richiedente.cliente.nome }}
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Informazioni attività associate -->
+                            {% if richiedente.attivita_totali_count > 0 %}
+                            <div class="alert alert-danger" role="alert">
+                                <h6 class="alert-heading">
+                                    <i class="bi bi-exclamation-circle"></i> Attenzione: Attività Associate
+                                </h6>
+                                <p class="mb-2">
+                                    Questo richiedente ha <strong>{{ richiedente.attivita_totali_count }} attività</strong> associate:
+                                </p>
+                                <ul class="mb-2">
+                                    <li>{{ richiedente.attivita_aperte_count }} attività aperte</li>
+                                    <li>{{ richiedente.attivita_chiuse_count }} attività chiuse</li>
+                                </ul>
+                                <p class="mb-0">
+                                    <strong>Eliminando questo richiedente, verranno eliminate anche tutte le sue attività.</strong>
+                                </p>
+                            </div>
+                            {% else %}
+                            <div class="alert alert-info" role="alert">
+                                <i class="bi bi-info-circle"></i>
+                                Questo richiedente non ha attività associate. L'eliminazione sarà sicura.
+                            </div>
+                            {% endif %}
+
+                            <!-- Form di conferma -->
+                            <form method="post" class="mt-4">
+                                {% csrf_token %}
+                                <div class="d-flex gap-3 justify-content-end">
+                                    <a href="{% url 'richiedente-detail' richiedente.pk %}" class="btn btn-outline-secondary btn-lg">
+                                        <i class="bi bi-arrow-left"></i> Annulla
+                                    </a>
+                                    <a href="{% url 'richiedente-list' %}" class="btn btn-outline-primary btn-lg">
+                                        <i class="bi bi-list-ul"></i> Lista Richiedenti
+                                    </a>
+                                    <button type="submit" class="btn btn-danger btn-lg" onclick="return confirmDelete()">
+                                        <i class="bi bi-trash"></i> Sì, Elimina Definitivamente
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+
+                        <!-- Sidebar con dettagli -->
+                        <div class="col-md-4">
+                            <div class="card bg-light">
+                                <div class="card-header">
+                                    <h6 class="mb-0">
+                                        <i class="bi bi-info-circle"></i> Dettagli Eliminazione
+                                    </h6>
+                                </div>
+                                <div class="card-body">
+                                    <small class="text-muted">
+                                        <strong>Cosa succederà:</strong>
+                                    </small>
+                                    <ul class="small mt-2 mb-3">
+                                        <li>Il richiedente verrà rimosso dal sistema</li>
+                                        {% if richiedente.attivita_totali_count > 0 %}
+                                        <li class="text-danger">Tutte le {{ richiedente.attivita_totali_count }} attività associate verranno eliminate</li>
+                                        {% endif %}
+                                        <li>I dati non potranno essere recuperati</li>
+                                        <li>L'azione verrà registrata nei log di sistema</li>
+                                    </ul>
+
+                                    {% if richiedente.attivita_totali_count > 0 %}
+                                    <small class="text-muted">
+                                        <strong>Alternative consigliate:</strong>
+                                    </small>
+                                    <ul class="small mt-2">
+                                        <li>
+                                            <a href="{% url 'richiedente-update' richiedente.pk %}" class="text-decoration-none">
+                                                Disattiva il richiedente
+                                            </a> invece di eliminarlo
+                                        </li>
+                                        <li>
+                                            <a href="{% url 'attivita-list' %}?richiedente={{ richiedente.pk }}" class="text-decoration-none">
+                                                Gestisci le attività
+                                            </a> prima dell'eliminazione
+                                        </li>
+                                    </ul>
+                                    {% endif %}
+                                </div>
+                            </div>
+
+                            {% if richiedente.attivita_totali_count > 0 %}
+                            <!-- Lista attività che verranno eliminate -->
+                            <div class="card mt-3">
+                                <div class="card-header bg-warning">
+                                    <h6 class="mb-0">
+                                        <i class="bi bi-exclamation-triangle-fill"></i> Attività che verranno eliminate
+                                    </h6>
+                                </div>
+                                <div class="card-body p-0" style="max-height: 300px; overflow-y: auto;">
+                                    <div class="list-group list-group-flush">
+                                        {% for attivita in richiedente.attivita.all|slice:":10" %}
+                                        <div class="list-group-item py-2">
+                                            <div class="d-flex justify-content-between align-items-center">
+                                                <div>
+                                                    <small class="fw-bold">{{ attivita.nome_flusso|truncatewords:3 }}</small>
+                                                    <br><small class="text-muted">{{ attivita.data_creazione|date:"d/m/Y" }}</small>
+                                                </div>
+                                                <div>
+                                                    {% if attivita.is_aperta %}
+                                                        <span class="badge bg-success">Aperta</span>
+                                                    {% else %}
+                                                        <span class="badge bg-secondary">Chiusa</span>
+                                                    {% endif %}
+                                                </div>
+                                            </div>
+                                        </div>
+                                        {% endfor %}
+                                        {% if richiedente.attivita_totali_count > 10 %}
+                                        <div class="list-group-item text-center text-muted py-2">
+                                            <small>... e altre {{ richiedente.attivita_totali_count|add:'-10' }} attività</small>
+                                        </div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Toast per messaggi -->
+{% if messages %}
+<div class="position-fixed bottom-0 end-0 p-3" style="z-index: 1050">
+    {% for message in messages %}
+    <div class="toast align-items-center text-white bg-{{ message.tags }} border-0" role="alert" aria-live="assertive" aria-atomic="true">
+        <div class="d-flex">
+            <div class="toast-body">
+                {{ message }}
+            </div>
+            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% endif %}
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Inizializza i toast per i messaggi
+    var toastElList = [].slice.call(document.querySelectorAll('.toast'));
+    var toastList = toastElList.map(function (toastEl) {
+        var toast = new bootstrap.Toast(toastEl);
+        toast.show();
+        return toast;
+    });
+});
+
+function confirmDelete() {
+    const richiedenteNome = "{{ richiedente.nome_completo }}";
+    const numAttivita = {{ richiedente.attivita_totali_count }};
+    
+    let message = `Sei SICURO di voler eliminare definitivamente "${richiedenteNome}"?`;
+    
+    if (numAttivita > 0) {
+        message += `\n\nQuesta azione eliminerà anche ${numAttivita} attività associate.`;
+    }
+    
+    message += "\n\nQuesta azione NON PUÒ essere annullata!";
+    
+    return confirm(message);
+}
+
+// Aggiungi un countdown di sicurezza per l'eliminazione
+let deleteButton = document.querySelector('button[type="submit"]');
+if (deleteButton) {
+    deleteButton.addEventListener('click', function(e) {
+        e.preventDefault();
+        
+        const numAttivita = {{ richiedente.attivita_totali_count }};
+        
+        if (numAttivita > 0) {
+            // Se ci sono attività, richiedi una conferma più forte
+            let userInput = prompt(`ATTENZIONE: Stai per eliminare ${numAttivita} attività!\n\nScrivi "ELIMINA" (tutto maiuscolo) per confermare:`);
+            
+            if (userInput === "ELIMINA") {
+                if (confirmDelete()) {
+                    this.form.submit();
+                }
+            } else {
+                alert("Eliminazione annullata. Devi scrivere esattamente 'ELIMINA' per confermare.");
+            }
+        } else {
+            // Se non ci sono attività, una semplice conferma
+            if (confirmDelete()) {
+                this.form.submit();
+            }
+        }
+    });
+}
+</script>
+
+<style>
+/* Stili personalizzati per la pagina di eliminazione */
+.card {
+    transition: transform 0.2s ease-in-out;
+}
+
+.avatar {
+    font-weight: bold;
+}
+
+.btn-danger:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(220, 53, 69, 0.3);
+}
+
+.alert {
+    border-left: 4px solid;
+}
+
+.alert-danger {
+    border-left-color: #dc3545;
+}
+
+.alert-warning {
+    border-left-color: #ffc107;
+}
+
+.alert-info {
+    border-left-color: #0dcaf0;
+}
+
+/* Animazione per elementi critici */
+@keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+    100% { transform: scale(1); }
+}
+
+.btn-danger {
+    animation: pulse 2s infinite;
+}
+
+.btn-danger:hover {
+    animation: none;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .btn-lg {
+        width: 100%;
+        margin-bottom: 0.5rem;
+    }
+    
+    .d-flex.gap-3 {
+        flex-direction: column;
+    }
+}
+</style>
+{% endblock %}

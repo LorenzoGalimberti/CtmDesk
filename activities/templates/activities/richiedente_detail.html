@@ -1,0 +1,349 @@
+{% extends "base.html" %}
+
+{% block title %}{{ richiedente.nome_completo }}{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <!-- Breadcrumb -->
+    <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{% url 'activities-dashboard' %}">Dashboard</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'richiedente-list' %}">Richiedenti</a></li>
+            <li class="breadcrumb-item active">{{ richiedente.nome_completo }}</li>
+        </ol>
+    </nav>
+
+    <!-- Header con informazioni richiedente -->
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <div class="d-flex align-items-center mb-3">
+                <div class="avatar bg-primary text-white rounded-circle d-flex align-items-center justify-content-center me-3" 
+                     style="width: 80px; height: 80px; font-size: 32px;">
+                    {{ richiedente.nome.0 }}{{ richiedente.cognome.0 }}
+                </div>
+                <div>
+                    <h1 class="display-6 text-primary mb-1">{{ richiedente.nome_completo }}</h1>
+                    <div class="mb-2">
+                        {% if richiedente.attivo %}
+                            <span class="badge bg-success fs-6 me-2">
+                                <i class="bi bi-check-circle"></i> Attivo
+                            </span>
+                        {% else %}
+                            <span class="badge bg-secondary fs-6 me-2">
+                                <i class="bi bi-x-circle"></i> Non Attivo
+                            </span>
+                        {% endif %}
+                        <span class="badge bg-info fs-6">
+                            <i class="bi bi-building"></i> {{ richiedente.cliente.nome }}
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4 text-md-end">
+            <div class="btn-group" role="group">
+                <a href="{% url 'richiedente-update' richiedente.pk %}" class="btn btn-warning">
+                    <i class="bi bi-pencil-square"></i> Modifica
+                </a>
+                <a href="{% url 'richiedente-delete' richiedente.pk %}" class="btn btn-outline-danger"
+                   onclick="return confirm('Sei sicuro di voler eliminare questo richiedente?')">
+                    <i class="bi bi-trash"></i> Elimina
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Colonna principale - Informazioni richiedente -->
+        <div class="col-md-8">
+            <!-- Card informazioni personali -->
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0"><i class="bi bi-person-lines-fill"></i> Informazioni Personali</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-3">
+                        <div class="col-sm-3"><strong>Nome Completo:</strong></div>
+                        <div class="col-sm-9">{{ richiedente.nome }} {{ richiedente.cognome }}</div>
+                    </div>
+                    
+                    {% if richiedente.email %}
+                    <div class="row mb-3">
+                        <div class="col-sm-3"><strong>Email:</strong></div>
+                        <div class="col-sm-9">
+                            <a href="mailto:{{ richiedente.email }}" class="text-decoration-none">
+                                <i class="bi bi-envelope"></i> {{ richiedente.email }}
+                            </a>
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    {% if richiedente.telefono %}
+                    <div class="row mb-3">
+                        <div class="col-sm-3"><strong>Telefono:</strong></div>
+                        <div class="col-sm-9">
+                            <a href="tel:{{ richiedente.telefono }}" class="text-decoration-none">
+                                <i class="bi bi-telephone"></i> {{ richiedente.telefono }}
+                            </a>
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    <div class="row mb-3">
+                        <div class="col-sm-3"><strong>Cliente:</strong></div>
+                        <div class="col-sm-9">
+                            <span class="badge fs-6" 
+                                  style="background-color: {{ richiedente.cliente.colore_sfondo|default:'#6c757d' }}; color: {{ richiedente.cliente.colore_testo|default:'#fff' }};">
+                                <i class="bi bi-building"></i> {{ richiedente.cliente.nome }}
+                            </span>
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-sm-3"><strong>Stato:</strong></div>
+                        <div class="col-sm-9">
+                            {% if richiedente.attivo %}
+                                <span class="badge bg-success">
+                                    <i class="bi bi-check-circle"></i> Attivo
+                                </span>
+                            {% else %}
+                                <span class="badge bg-secondary">
+                                    <i class="bi bi-x-circle"></i> Non Attivo
+                                </span>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    {% if richiedente.created_at %}
+                    <div class="row mb-3">
+                        <div class="col-sm-3"><strong>Registrato il:</strong></div>
+                        <div class="col-sm-9">{{ richiedente.created_at|date:"d/m/Y alle H:i" }}</div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Card attività recenti -->
+            <div class="card shadow-sm">
+                <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">
+                        <i class="bi bi-activity"></i> Attività Recenti
+                        {% if attivita_recenti %}
+                            <span class="badge bg-primary">{{ richiedente.attivita.count }}</span>
+                        {% endif %}
+                    </h5>
+                    <a href="{% url 'attivita-create' %}" class="btn btn-sm btn-outline-success">
+                        <i class="bi bi-plus-circle"></i> Nuova Attività
+                    </a>
+                </div>
+                <div class="card-body">
+                    {% if attivita_recenti %}
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Nome Flusso</th>
+                                        <th>Categoria</th>
+                                        <th>Stato</th>
+                                        <th>Data Creazione</th>
+                                        <th class="text-center">Azioni</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for attivita in attivita_recenti %}
+                                    <tr>
+                                        <td>
+                                            <a href="{% url 'attivita-detail' attivita.pk %}" 
+                                               class="text-decoration-none fw-bold">
+                                                {{ attivita.nome_flusso|truncatechars:40 }}
+                                            </a>
+                                        </td>
+                                        <td>
+                                            {% if attivita.categoria %}
+                                                <span class="badge" 
+                                                      style="background-color: {{ attivita.categoria.colore|default:'#6c757d' }}; color: white;">
+                                                    <i class="{{ attivita.categoria.icona|default:'bi-folder' }}"></i>
+                                                    {{ attivita.categoria.nome }}
+                                                </span>
+                                            {% else %}
+                                                <span class="text-muted">-</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            {% if attivita.stato == 'aperta' %}
+                                                <span class="badge bg-success">Aperta</span>
+                                            {% else %}
+                                                <span class="badge bg-secondary">Chiusa</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            <small class="text-muted">
+                                                {{ attivita.data_creazione|date:"d/m/Y H:i" }}
+                                            </small>
+                                        </td>
+                                        <td class="text-center">
+                                            <a href="{% url 'attivita-detail' attivita.pk %}" 
+                                               class="btn btn-sm btn-outline-primary"
+                                               title="Visualizza dettagli">
+                                                <i class="bi bi-eye"></i>
+                                            </a>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                        
+                        {% if richiedente.attivita.count > 10 %}
+                        <div class="text-center mt-3">
+                            <a href="{% url 'attivita-list' %}?richiedente={{ richiedente.pk }}" 
+                               class="btn btn-outline-primary">
+                                <i class="bi bi-list"></i> Vedi Tutte le Attività ({{ richiedente.attivita.count }})
+                            </a>
+                        </div>
+                        {% endif %}
+                    {% else %}
+                        <div class="text-center py-4">
+                            <i class="bi bi-activity display-4 text-muted"></i>
+                            <h6 class="text-muted mt-2">Nessuna attività</h6>
+                            <p class="text-muted small">Questo richiedente non ha ancora creato attività</p>
+                            <a href="{% url 'attivita-create' %}" class="btn btn-outline-primary">
+                                <i class="bi bi-plus-circle"></i> Crea Prima Attività
+                            </a>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Colonna laterale - Statistiche e azioni -->
+        <div class="col-md-4">
+            <!-- Card statistiche -->
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h6 class="mb-0"><i class="bi bi-graph-up"></i> Statistiche</h6>
+                </div>
+                <div class="card-body">
+                    <div class="row text-center mb-3">
+                        <div class="col-6">
+                            <div class="border-end">
+                                <h3 class="text-primary mb-1">{{ richiedente.attivita.count }}</h3>
+                                <small class="text-muted">Totale<br>Attività</small>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <h3 class="text-success mb-1">{{ richiedente.attivita.filter.stato|default:'aperta'|length }}</h3>
+                            <small class="text-muted">Attività<br>Aperte</small>
+                        </div>
+                    </div>
+                    
+                    {% if richiedente.attivita.exists %}
+                    <div class="row text-center">
+                        <div class="col-6">
+                            <div class="border-end">
+                                <h4 class="text-secondary mb-1">{{ richiedente.attivita.filter.stato|default:'chiusa'|length }}</h4>
+                                <small class="text-muted">Attività<br>Chiuse</small>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <h4 class="text-info mb-1">
+                                {{ richiedente.attivita.first.data_creazione|timesince|truncatewords:1 }}
+                            </h4>
+                            <small class="text-muted">Ultima<br>Attività</small>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Card azioni rapide -->
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-success text-white">
+                    <h6 class="mb-0"><i class="bi bi-lightning"></i> Azioni Rapide</h6>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        <a href="{% url 'attivita-create' %}" class="btn btn-success">
+                            <i class="bi bi-plus-circle"></i> Nuova Attività
+                        </a>
+                        
+                        {% if richiedente.email %}
+                        <a href="mailto:{{ richiedente.email }}" class="btn btn-outline-primary">
+                            <i class="bi bi-envelope"></i> Invia Email
+                        </a>
+                        {% endif %}
+                        
+                        {% if richiedente.telefono %}
+                        <a href="tel:{{ richiedente.telefono }}" class="btn btn-outline-success">
+                            <i class="bi bi-telephone"></i> Chiama
+                        </a>
+                        {% endif %}
+                        
+                        <a href="{% url 'richiedente-update' richiedente.pk %}" class="btn btn-outline-warning">
+                            <i class="bi bi-pencil-square"></i> Modifica Dati
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Card cliente -->
+            <div class="card shadow-sm">
+                <div class="card-header text-white" 
+                     style="background-color: {{ richiedente.cliente.colore_sfondo|default:'#6c757d' }}; color: {{ richiedente.cliente.colore_testo|default:'#fff' }};">
+                    <h6 class="mb-0"><i class="bi bi-building"></i> Cliente di Appartenenza</h6>
+                </div>
+                <div class="card-body text-center">
+                    <h5 class="mb-3">{{ richiedente.cliente.nome }}</h5>
+                    <p class="text-muted small mb-3">
+                        Questo richiedente appartiene al cliente {{ richiedente.cliente.nome }}
+                    </p>
+                    <a href="{% url 'attivita-list' %}?cliente={{ richiedente.cliente.pk }}" 
+                       class="btn btn-outline-primary btn-sm">
+                        <i class="bi bi-list"></i> Vedi Tutte le Attività Cliente
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Pulsanti di navigazione -->
+    <div class="mt-4 d-flex gap-3 justify-content-center">
+        <a href="{% url 'richiedente-list' %}" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left"></i> Torna alla Lista
+        </a>
+        <a href="{% url 'activities-dashboard' %}" class="btn btn-outline-primary">
+            <i class="bi bi-house"></i> Dashboard
+        </a>
+    </div>
+</div>
+
+<!-- Toast per messaggi -->
+{% if messages %}
+<div class="position-fixed bottom-0 end-0 p-3" style="z-index: 1050">
+    {% for message in messages %}
+    <div class="toast align-items-center text-white bg-{{ message.tags }} border-0" role="alert" aria-live="assertive" aria-atomic="true">
+        <div class="d-flex">
+            <div class="toast-body">
+                {{ message }}
+            </div>
+            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% endif %}
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Inizializza i toast per i messaggi
+    var toastElList = [].slice.call(document.querySelectorAll('.toast'));
+    var toastList = toastElList.map(function (toastEl) {
+        var toast = new bootstrap.Toast(toastEl);
+        toast.show();
+        return toast;
+    });
+});
+</script>
+{% endblock %}

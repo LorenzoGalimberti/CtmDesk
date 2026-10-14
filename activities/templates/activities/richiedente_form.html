@@ -1,0 +1,512 @@
+<!-- activities/templates/activities/richiedente_form.html -->
+{% extends "base.html" %}
+
+{% block title %}
+    {% if form.instance.pk %}
+        Modifica Richiedente - {{ form.instance.nome_completo }}
+    {% else %}
+        Aggiungi Nuovo Richiedente
+    {% endif %}
+{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <!-- Breadcrumb -->
+    <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{% url 'activities-dashboard' %}">Dashboard</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'richiedente-list' %}">Richiedenti</a></li>
+            <li class="breadcrumb-item active">
+                {% if form.instance.pk %}Modifica{% else %}Aggiungi{% endif %}
+            </li>
+        </ol>
+    </nav>
+
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <h1 class="display-6 text-primary">
+                <i class="bi bi-{% if form.instance.pk %}pencil-square{% else %}person-plus{% endif %}"></i>
+                {% if form.instance.pk %}
+                    Modifica Richiedente
+                {% else %}
+                    Aggiungi Nuovo Richiedente
+                {% endif %}
+            </h1>
+            {% if form.instance.pk %}
+                <p class="text-muted">Modifica le informazioni del richiedente esistente</p>
+            {% else %}
+                <p class="text-muted">Compila i campi per aggiungere un nuovo richiedente al sistema</p>
+            {% endif %}
+        </div>
+        <div class="col-md-4 text-md-end">
+            <a href="{% url 'richiedente-list' %}" class="btn btn-outline-secondary">
+                <i class="bi bi-arrow-left"></i> Torna alla Lista
+            </a>
+        </div>
+    </div>
+
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <!-- Card principale del form -->
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">
+                        <i class="bi bi-person-badge"></i> Informazioni Richiedente
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <!-- Messaggi di errore -->
+                    {% if form.non_field_errors %}
+                        <div class="alert alert-danger" role="alert">
+                            <i class="bi bi-exclamation-triangle"></i>
+                            {{ form.non_field_errors }}
+                        </div>
+                    {% endif %}
+
+                    <form method="post" novalidate>
+                        {% csrf_token %}
+                        
+                        <!-- Informazioni Personali -->
+                        <div class="row">
+                            <!-- Nome -->
+                            <div class="col-md-6 mb-4">
+                                <label for="{{ form.nome.id_for_label }}" class="form-label fw-bold">
+                                    <i class="bi bi-person text-primary"></i> {{ form.nome.label }}
+                                    <span class="text-danger">*</span>
+                                </label>
+                                {{ form.nome }}
+                                {% if form.nome.errors %}
+                                    <div class="text-danger small mt-1">
+                                        <i class="bi bi-exclamation-circle"></i>
+                                        {{ form.nome.errors.0 }}
+                                    </div>
+                                {% endif %}
+                            </div>
+
+                            <!-- Cognome -->
+                            <div class="col-md-6 mb-4">
+                                <label for="{{ form.cognome.id_for_label }}" class="form-label fw-bold">
+                                    <i class="bi bi-person text-primary"></i> {{ form.cognome.label }}
+                                    <span class="text-danger">*</span>
+                                </label>
+                                {{ form.cognome }}
+                                {% if form.cognome.errors %}
+                                    <div class="text-danger small mt-1">
+                                        <i class="bi bi-exclamation-circle"></i>
+                                        {{ form.cognome.errors.0 }}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <!-- Email -->
+                        <div class="mb-4">
+                            <label for="{{ form.email.id_for_label }}" class="form-label fw-bold">
+                                <i class="bi bi-envelope text-primary"></i> {{ form.email.label }}
+                            </label>
+                            {{ form.email }}
+                            {% if form.email.errors %}
+                                <div class="text-danger small mt-1">
+                                    <i class="bi bi-exclamation-circle"></i>
+                                    {{ form.email.errors.0 }}
+                                </div>
+                            {% endif %}
+                            <div class="form-text">
+                                Indirizzo email per le comunicazioni (opzionale)
+                            </div>
+                        </div>
+
+                        <!-- Telefono -->
+                        <div class="mb-4">
+                            <label for="{{ form.telefono.id_for_label }}" class="form-label fw-bold">
+                                <i class="bi bi-telephone text-primary"></i> {{ form.telefono.label }}
+                            </label>
+                            {{ form.telefono }}
+                            {% if form.telefono.errors %}
+                                <div class="text-danger small mt-1">
+                                    <i class="bi bi-exclamation-circle"></i>
+                                    {{ form.telefono.errors.0 }}
+                                </div>
+                            {% endif %}
+                            <div class="form-text">
+                                Numero di telefono per contatti diretti (opzionale)
+                            </div>
+                        </div>
+
+                        <!-- Cliente -->
+                        <div class="mb-4">
+                            <label for="{{ form.cliente.id_for_label }}" class="form-label fw-bold">
+                                <i class="bi bi-building text-primary"></i> {{ form.cliente.label }}
+                                <span class="text-danger">*</span>
+                            </label>
+                            {{ form.cliente }}
+                            {% if form.cliente.errors %}
+                                <div class="text-danger small mt-1">
+                                    <i class="bi bi-exclamation-circle"></i>
+                                    {{ form.cliente.errors.0 }}
+                                </div>
+                            {% endif %}
+                            <div class="form-text">
+                                Seleziona il cliente di appartenenza del richiedente
+                            </div>
+                        </div>
+
+                        <!-- Attivo -->
+                        <div class="mb-4">
+                            <div class="form-check">
+                                {{ form.attivo }}
+                                <label class="form-check-label fw-bold" for="{{ form.attivo.id_for_label }}">
+                                    <i class="bi bi-toggle-on text-success"></i> {{ form.attivo.label }}
+                                </label>
+                                {% if form.attivo.errors %}
+                                    <div class="text-danger small mt-1">
+                                        <i class="bi bi-exclamation-circle"></i>
+                                        {{ form.attivo.errors.0 }}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            <div class="form-text">
+                                I richiedenti non attivi non potranno essere selezionati per nuove attività
+                            </div>
+                        </div>
+
+                        <!-- Pulsanti di azione -->
+                        <div class="d-flex gap-3 justify-content-end">
+                            <a href="{% url 'richiedente-list' %}" class="btn btn-outline-secondary btn-lg">
+                                <i class="bi bi-x-circle"></i> Annulla
+                            </a>
+                            <button type="submit" class="btn btn-success btn-lg">
+                                <i class="bi bi-{% if form.instance.pk %}pencil-square{% else %}person-plus{% endif %}"></i>
+                                {% if form.instance.pk %}
+                                    Aggiorna Richiedente
+                                {% else %}
+                                    Aggiungi Richiedente
+                                {% endif %}
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Card informazioni aggiuntive -->
+            {% if form.instance.pk %}
+            <div class="card shadow-sm mt-4">
+                <div class="card-header bg-light">
+                    <h6 class="mb-0">
+                        <i class="bi bi-info-circle"></i> Informazioni Richiedente
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-4">
+                            <small class="text-muted">Data Registrazione:</small><br>
+                            <strong>{{ form.instance.created_at|date:"d/m/Y alle H:i" }}</strong>
+                        </div>
+                        <div class="col-md-4">
+                            <small class="text-muted">Ultima Modifica:</small><br>
+                            <strong>{{ form.instance.updated_at|date:"d/m/Y alle H:i" }}</strong>
+                        </div>
+                        <div class="col-md-4">
+                            <small class="text-muted">Numero Attività:</small><br>
+                            <strong>{{ form.instance.attivita.count }} attività</strong>
+                            {% if form.instance.attivita.count > 0 %}
+                                <br><small>
+                                    <a href="{% url 'attivita-list' %}?richiedente={{ form.instance.pk }}" class="text-decoration-none">
+                                        <i class="bi bi-eye"></i> Visualizza attività
+                                    </a>
+                                </small>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Card suggerimenti -->
+            <div class="card shadow-sm mt-4 border-info">
+                <div class="card-header bg-info text-white">
+                    <h6 class="mb-0">
+                        <i class="bi bi-lightbulb"></i> Suggerimenti
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <ul class="mb-0 small">
+                        <li><strong>Email Opzionale:</strong> L'email non è obbligatoria ma se fornita deve essere unica nel sistema</li>
+                        <li><strong>Cliente Corretto:</strong> Assicurati di associare il richiedente al cliente giusto</li>
+                        <li><strong>Richiedenti Inattivi:</strong> I richiedenti disattivati non compariranno nelle liste per nuove attività</li>
+                        <li><strong>Informazioni Minime:</strong> Sono sufficienti Nome, Cognome e Cliente per creare un richiedente</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sidebar con anteprima (solo in modifica) -->
+        {% if form.instance.pk %}
+        <div class="col-md-4">
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <h6 class="mb-0">
+                        <i class="bi bi-person-circle"></i> Anteprima Richiedente
+                    </h6>
+                </div>
+                <div class="card-body text-center">
+                    <div class="avatar bg-primary text-white rounded-circle d-inline-flex align-items-center justify-content-center mb-3" 
+                         style="width: 80px; height: 80px; font-size: 32px;">
+                        {{ form.instance.nome.0|default:'?' }}{{ form.instance.cognome.0|default:'?' }}
+                    </div>
+                    <h5>{{ form.instance.nome_completo|default:'Nome Completo' }}</h5>
+                    <p class="text-muted mb-2">
+                        <i class="bi bi-envelope"></i> {{ form.instance.email|default:'email@esempio.com' }}
+                    </p>
+                    {% if form.instance.telefono %}
+                    <p class="text-muted mb-3">
+                        <i class="bi bi-telephone"></i> {{ form.instance.telefono }}
+                    </p>
+                    {% endif %}
+                    
+                    {% if form.instance.cliente %}
+                    <span class="badge mb-3" 
+                          style="background-color: {{ form.instance.cliente.colore_sfondo|default:'#6c757d' }}; color: {{ form.instance.cliente.colore_testo|default:'#fff' }};">
+                        {{ form.instance.cliente.nome }}
+                    </span>
+                    {% endif %}
+                    
+                    <div class="mt-3">
+                        {% if form.instance.attivo %}
+                            <span class="badge bg-success">Attivo</span>
+                        {% else %}
+                            <span class="badge bg-secondary">Non Attivo</span>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Card attività recenti -->
+            {% if form.instance.attivita.exists %}
+            <div class="card shadow-sm mt-4">
+                <div class="card-header bg-light">
+                    <h6 class="mb-0">
+                        <i class="bi bi-clock-history"></i> Attività Recenti
+                    </h6>
+                </div>
+                <div class="card-body">
+                    {% for attivita in form.instance.attivita.all|slice:":5" %}
+                    <div class="d-flex justify-content-between align-items-center mb-2 pb-2 {% if not forloop.last %}border-bottom{% endif %}">
+                        <div>
+                            <small class="fw-bold">{{ attivita.nome_flusso|truncatewords:3 }}</small><br>
+                            <small class="text-muted">{{ attivita.data_creazione|date:"d/m/Y" }}</small>
+                        </div>
+                        <div>
+                            {% if attivita.is_aperta %}
+                                <span class="badge bg-success">Aperta</span>
+                            {% else %}
+                                <span class="badge bg-secondary">Chiusa</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endfor %}
+                    {% if form.instance.attivita.count > 5 %}
+                    <div class="text-center mt-2">
+                        <small>
+                            <a href="{% url 'attivita-list' %}?richiedente={{ form.instance.pk }}" class="text-decoration-none">
+                                <i class="bi bi-eye"></i> Vedi tutte le {{ form.instance.attivita.count }} attività
+                            </a>
+                        </small>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            {% endif %}
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Toast per messaggi -->
+{% if messages %}
+<div class="position-fixed bottom-0 end-0 p-3" style="z-index: 1050">
+    {% for message in messages %}
+    <div class="toast align-items-center text-white bg-{{ message.tags }} border-0" role="alert" aria-live="assertive" aria-atomic="true">
+        <div class="d-flex">
+            <div class="toast-body">
+                {{ message }}
+            </div>
+            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% endif %}
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Inizializza i toast per i messaggi
+    var toastElList = [].slice.call(document.querySelectorAll('.toast'));
+    var toastList = toastElList.map(function (toastEl) {
+        var toast = new bootstrap.Toast(toastEl);
+        toast.show();
+        return toast;
+    });
+
+    // Validazione in tempo reale
+    const form = document.querySelector('form');
+    const submitBtn = form.querySelector('button[type="submit"]');
+    const requiredFields = form.querySelectorAll('input[required], select[required]');
+    
+    function validateForm() {
+        let isValid = true;
+        requiredFields.forEach(field => {
+            if (!field.value.trim()) {
+                isValid = false;
+            }
+        });
+        
+        submitBtn.disabled = !isValid;
+        if (isValid) {
+            submitBtn.classList.remove('btn-outline-success');
+            submitBtn.classList.add('btn-success');
+        } else {
+            submitBtn.classList.remove('btn-success');
+            submitBtn.classList.add('btn-outline-success');
+        }
+    }
+
+    // Controlla validità al caricamento
+    validateForm();
+
+    // Controlla validità ad ogni cambiamento
+    requiredFields.forEach(field => {
+        field.addEventListener('input', validateForm);
+        field.addEventListener('change', validateForm);
+    });
+
+    // Aggiorna anteprima richiedente in tempo reale (se presente)
+    const nomeField = document.querySelector('#id_nome');
+    const cognomeField = document.querySelector('#id_cognome');
+    const emailField = document.querySelector('#id_email');
+    const telefonoField = document.querySelector('#id_telefono');
+    const attivoField = document.querySelector('#id_attivo');
+    
+    const avatar = document.querySelector('.avatar');
+    const nomeCompleto = document.querySelector('h5');
+    const emailDisplay = document.querySelector('.text-muted');
+    
+    if (avatar && nomeCompleto) {
+        function updatePreview() {
+            const nome = nomeField ? nomeField.value : '';
+            const cognome = cognomeField ? cognomeField.value : '';
+            const email = emailField ? emailField.value : '';
+            
+            // Aggiorna avatar
+            avatar.textContent = (nome.charAt(0) || '?') + (cognome.charAt(0) || '?');
+            
+            // Aggiorna nome completo
+            nomeCompleto.textContent = nome && cognome ? `${nome} ${cognome}` : 'Nome Completo';
+            
+            // Aggiorna email (se presente)
+            if (emailDisplay) {
+                emailDisplay.innerHTML = `<i class="bi bi-envelope"></i> ${email || 'email@esempio.com'}`;
+            }
+        }
+        
+        // Aggiorna anteprima sui cambiamenti
+        [nomeField, cognomeField, emailField].forEach(field => {
+            if (field) {
+                field.addEventListener('input', updatePreview);
+            }
+        });
+    }
+
+    // Animazione di invio form
+    form.addEventListener('submit', function() {
+        submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Salvataggio...';
+        submitBtn.disabled = true;
+    });
+
+    // Conferma prima di uscire se ci sono modifiche non salvate
+    let formChanged = false;
+    const formInputs = form.querySelectorAll('input, select, textarea');
+    
+    formInputs.forEach(input => {
+        input.addEventListener('input', function() {
+            formChanged = true;
+        });
+    });
+
+    window.addEventListener('beforeunload', function(e) {
+        if (formChanged) {
+            e.preventDefault();
+            e.returnValue = '';
+        }
+    });
+
+    // Reset flag quando il form viene inviato
+    form.addEventListener('submit', function() {
+        formChanged = false;
+    });
+});
+</script>
+
+<style>
+/* Stili personalizzati per il form richiedente */
+.form-control:focus {
+    border-color: #0d6efd;
+    box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25);
+}
+
+.form-label {
+    margin-bottom: 0.5rem;
+}
+
+.avatar {
+    font-weight: bold;
+    transition: all 0.3s ease;
+}
+
+.card {
+    transition: transform 0.2s ease-in-out;
+}
+
+.card:hover {
+    transform: translateY(-2px);
+}
+
+/* Animazioni per i campi con errori */
+.text-danger {
+    animation: shake 0.5s ease-in-out;
+}
+
+@keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-5px); }
+    75% { transform: translateX(5px); }
+}
+
+/* Checkbox personalizzato */
+.form-check-input:checked {
+    background-color: #198754;
+    border-color: #198754;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .btn-lg {
+        width: 100%;
+        margin-bottom: 0.5rem;
+    }
+    
+    .d-flex.gap-3 {
+        flex-direction: column;
+    }
+    
+    .avatar {
+        width: 60px !important;
+        height: 60px !important;
+        font-size: 24px !important;
+    }
+}
+</style>
+{% endblock %}

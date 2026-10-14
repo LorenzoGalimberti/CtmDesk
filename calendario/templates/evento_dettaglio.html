@@ -1,0 +1,162 @@
+{% extends 'base.html' %}
+
+{% block title %}Dettaglio Evento{% endblock %}
+
+{% block content %}
+{% csrf_token %}
+<div class="container mt-4">
+    <div class="text-center mb-4">
+        <h1 class="display-4 text-primary">Dettaglio Evento</h1>
+        <hr class="my-4">
+    </div>
+
+    <div class="card shadow-sm">
+        <div class="card-header text-white" style="background-color: {{ evento.cliente.colore_sfondo|default:'#007bff' }}; color: {{ evento.cliente.colore_testo|default:'white' }};">
+            <h5 class="card-title mb-0">{{ evento.titolo }}</h5>
+        </div>
+        <div class="card-body">
+            {% if evento.cliente %}
+            <p class="card-text">
+                <strong>Cliente:</strong> 
+                <span class="badge" style="background-color: {{ evento.cliente.colore_sfondo }}; color: {{ evento.cliente.colore_testo }};">
+                    {{ evento.cliente.nome }}
+                </span>
+            </p>
+            {% endif %}
+            
+            <p class="card-text"><strong>Descrizione:</strong> {{ evento.descrizione|default:"Nessuna descrizione" }}</p>
+            
+            <p class="card-text">
+                <strong>Data inizio:</strong> 
+                <span class="badge bg-info text-dark">{{ evento.data_inizio|date:"d/m/Y H:i" }}</span>
+            </p>
+            
+            <p class="card-text">
+                <strong>Data fine:</strong> 
+                <span class="badge bg-info text-dark">{{ evento.data_fine|date:"d/m/Y H:i" }}</span>
+            </p>
+            
+            {% if evento.archived %}
+            <p class="card-text">
+                <span class="badge bg-secondary">Evento Archiviato</span>
+            </p>
+            {% endif %}
+            
+            <!-- Mostra info sul task collegato -->
+            {% if task_collegato %}
+            <div class="alert alert-info">
+                <h6 class="alert-heading">
+                    <i class="bi bi-check2-square"></i> Task collegato nel Todo
+                </h6>
+                <p class="mb-1">
+                    <strong>Titolo:</strong> {{ task_collegato.title }}<br>
+                    <strong>Stato:</strong> 
+                    {% if task_collegato.completed %}
+                        <span class="badge bg-success">Completato</span>
+                    {% elif task_collegato.archiviato %}
+                        <span class="badge bg-secondary">Archiviato</span>
+                    {% else %}
+                        <span class="badge bg-primary">In corso</span>
+                    {% endif %}
+                </p>
+                <a href="{% url 'todo:task_list' %}" class="btn btn-sm btn-outline-primary">
+                    <i class="bi bi-list-task"></i> Vai al Todo
+                </a>
+            </div>
+            {% else %}
+            <div class="alert alert-warning">
+                <i class="bi bi-exclamation-triangle"></i> Nessun task collegato trovato nel Todo
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="mt-4 d-flex justify-content-between flex-wrap gap-2">
+        <a href="{% url 'calendario' %}" class="btn btn-outline-secondary btn-lg">
+            <i class="bi bi-calendar3"></i> Torna al Calendario
+        </a>
+        
+        <!-- Pulsante per aggiungere al Todo -->
+        <button type="button" class="btn btn-outline-primary btn-lg" onclick="aggiungiATodo({{ evento.id }})">
+            <i class="bi bi-plus-circle"></i> Aggiungi al Todo
+        </button>
+        
+        {% if not evento.archived %}
+            <a href="{% url 'archivia_evento' evento.id %}" class="btn btn-outline-success btn-lg">
+                <i class="bi bi-archive"></i> Archivia Evento
+            </a>
+        {% endif %}
+        
+        <form action="{% url 'elimina_evento' evento.id %}" method="post" style="display:inline;" 
+              onsubmit="return confirm('Sei sicuro di voler eliminare questo evento?');">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-outline-danger btn-lg">
+                <i class="bi bi-trash"></i> Elimina Evento
+            </button>
+        </form>
+    </div>
+
+    <!-- Script per aggiungere al Todo -->
+    <script>
+    function aggiungiATodo(eventoId) {
+        fetch(`/calendario/evento/${eventoId}/aggiungi-a-todo/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+                'Content-Type': 'application/json',
+            },
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'success') {
+                // Mostra un messaggio di successo
+                showNotification(data.message, 'success');
+                // Opzionalmente, disabilita il pulsante per evitare duplicati
+                event.target.innerHTML = '<i class="bi bi-check"></i> Aggiunto al Todo';
+                event.target.disabled = true;
+                event.target.classList.remove('btn-outline-primary');
+                event.target.classList.add('btn-success');
+            } else {
+                showNotification('Errore nell\'aggiungere al todo', 'error');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showNotification('Errore di connessione', 'error');
+        });
+    }
+
+    function showNotification(message, type = 'success') {
+        // Crea un toast Bootstrap
+        const toastHtml = `
+            <div class="toast align-items-center text-white bg-${type === 'success' ? 'success' : 'danger'} border-0" role="alert" aria-live="assertive" aria-atomic="true">
+                <div class="d-flex">
+                    <div class="toast-body">
+                        <i class="bi bi-${type === 'success' ? 'check-circle' : 'exclamation-triangle'} me-2"></i> ${message}
+                    </div>
+                    <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+                </div>
+            </div>
+        `;
+        
+        // Aggiungi il toast alla pagina
+        let toastContainer = document.querySelector('.toast-container');
+        if (!toastContainer) {
+            toastContainer = document.createElement('div');
+            toastContainer.className = 'toast-container position-fixed bottom-0 end-0 p-3';
+            document.body.appendChild(toastContainer);
+        }
+        
+        toastContainer.insertAdjacentHTML('beforeend', toastHtml);
+        const toastElement = toastContainer.lastElementChild;
+        const toast = new bootstrap.Toast(toastElement);
+        toast.show();
+        
+        // Rimuovi il toast dopo che è stato nascosto
+        toastElement.addEventListener('hidden.bs.toast', () => {
+            toastElement.remove();
+        });
+    }
+    </script>
+</div>
+{% endblock %}

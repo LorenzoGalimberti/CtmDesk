@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+
+{% block title %}Elenco Procedure{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2 class="mb-3">Elenco Procedure</h2>
+    <a href="{% url 'procedura-create' %}" class="btn btn-success mb-3">➕ Crea Nuova Procedura</a>
+    <ul class="list-group">
+        {% for procedura in procedure %}
+            <li class="list-group-item d-flex justify-content-between align-items-center">
+                <a href="{% url 'procedura-detail' procedura.pk %}" class="text-decoration-none">
+                    {{ procedura.nome }}
+                </a>
+                <div>
+                    <a href="{% url 'procedura-update' procedura.pk %}" class="btn btn-warning btn-sm">✏️</a>
+                    <a href="{% url 'procedura-delete' procedura.pk %}" class="btn btn-danger btn-sm">🗑️</a>
+                </div>
+            </li>
+        {% endfor %}
+    </ul>
+</div>
+{% endblock %}

@@ -1,0 +1,121 @@
+{% extends 'base.html' %}
+
+{% block title %}Note del {{ giorno|date:"d-m-Y" }}{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h1 class="text-center mb-4">Note del giorno <strong>{{ giorno|date:"d-m-Y" }}</strong></h1>
+
+    <!-- Navigazione giorni -->
+    <div class="d-flex justify-content-between mb-4">
+        <a href="{% url 'diario:diario_del_giorno' giorno_precedente.year giorno_precedente.month giorno_precedente.day %}" 
+           class="btn btn-outline-secondary" data-bs-toggle="tooltip" data-bs-placement="top" title="Vai al giorno precedente">
+            &laquo; Giorno precedente
+        </a>
+        <a href="{% url 'diario:diario_del_giorno' giorno_successivo.year giorno_successivo.month giorno_successivo.day %}" 
+           class="btn btn-outline-secondary" data-bs-toggle="tooltip" data-bs-placement="top" title="Vai al giorno successivo">
+            Giorno successivo &raquo;
+        </a>
+    </div>
+
+    <!-- Pulsante per creare una nuova nota -->
+    <div class="text-end mb-3">
+        <a href="{% url 'diario:nuovo_diario' giorno.year giorno.month giorno.day %}" class="btn btn-success btn-lg">
+            <i class="bi bi-plus-circle"></i> Aggiungi Nota
+        </a>
+    </div>
+
+    <!-- Elenco delle note -->
+    {% if note %}
+        <div class="row row-cols-1 row-cols-md-2 g-4">
+            {% for nota in note %}
+            <div class="col">
+                <div class="card border-0 shadow-sm h-100 d-flex flex-column justify-content-around p-3 bg-light">
+                    <!-- Titolo della nota -->
+                    <h5 class="card-title fw-bold mb-2">
+                        <a href="{% url 'diario:dettaglio_diario' nota.id %}" class="text-decoration-none text-dark">
+                            {{ nota.titolo }}
+                        </a>
+                    </h5>
+                    
+                    <!-- Clienti della nota -->
+                    <div class="mb-2">
+                        {% if nota.clienti.all %}
+                            {% for cliente in nota.clienti.all %}
+                            <span class="badge"
+                                  style="background-color: {{ cliente.colore_sfondo }}; color: {{ cliente.colore_testo }};">
+                                {{ cliente.nome }}
+                            </span>
+                            {% endfor %}
+                        {% else %}
+                            <p class="text-muted small">
+                                <em>Nessun cliente</em>
+                            </p>
+                        {% endif %}
+                    </div>
+
+                    <!-- Azioni (Modifica/Elimina) -->
+                    <div class="d-flex justify-content-center">
+                        <a href="{% url 'diario:aggiorna_diario' nota.pk %}" class="btn btn-outline-warning btn-sm mx-2">
+                            <i class="bi bi-pencil"></i> 
+                        </a>
+                        <!-- Link per aprire il pop-up di conferma -->
+                        <a href="javascript:void(0);" 
+                           class="btn btn-outline-danger btn-sm mx-2"
+                           data-bs-toggle="modal" 
+                           data-bs-target="#confirmDeleteModal"
+                           data-note-id="{{ nota.pk }}">
+                           <i class="bi bi-trash"></i> 
+                        </a>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="alert alert-warning text-center" role="alert">
+            <strong>Non ci sono note per questa data.</strong> 
+            <a href="{% url 'diario:nuovo_diario' giorno.year giorno.month giorno.day %}" class="alert-link">Aggiungi una nuova nota!</a>
+        </div>
+    {% endif %}
+</div>
+
+<!-- Modale di conferma per eliminazione -->
+<div class="modal fade" id="confirmDeleteModal" tabindex="-1" aria-labelledby="confirmDeleteModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="confirmDeleteModalLabel">Conferma eliminazione</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        Sei sicuro di voler eliminare questa nota? Questa azione non può essere annullata.
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annulla</button>
+        <a id="deleteNoteBtn" href="#" class="btn btn-danger">Elimina</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Tooltip di Bootstrap -->
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+        tooltipTriggerList.forEach(function (tooltipTriggerEl) {
+            new bootstrap.Tooltip(tooltipTriggerEl);
+        });
+    });
+
+    // Aggiungi l'ID della nota da eliminare al bottone "Elimina" del modale
+    var deleteNoteBtn = document.getElementById('deleteNoteBtn');
+    var modal = document.getElementById('confirmDeleteModal');
+
+    modal.addEventListener('show.bs.modal', function (event) {
+        var button = event.relatedTarget; // Il bottone che ha attivato il modale
+        var noteId = button.getAttribute('data-note-id'); // Prendi l'ID della nota
+        deleteNoteBtn.setAttribute('href', "{% url 'diario:cancella_diario' '0' %}".replace('0', noteId)); // Imposta l'URL per l'eliminazione
+    });
+</script>
+{% endblock %}

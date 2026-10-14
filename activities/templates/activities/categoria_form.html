@@ -1,0 +1,458 @@
+<!-- activities/templates/activities/categoria_form.html -->
+{% extends "base.html" %}
+
+{% block title %}
+    {% if form.instance.pk %}
+        Modifica Categoria - {{ form.instance.nome }}
+    {% else %}
+        Crea Nuova Categoria
+    {% endif %}
+{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <!-- Breadcrumb -->
+    <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{% url 'activities-dashboard' %}">Dashboard</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'categoria-list' %}">Categorie</a></li>
+            <li class="breadcrumb-item active">
+                {% if form.instance.pk %}Modifica{% else %}Crea{% endif %}
+            </li>
+        </ol>
+    </nav>
+
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <h1 class="display-6 text-primary">
+                <i class="bi bi-{% if form.instance.pk %}pencil-square{% else %}plus-circle{% endif %}"></i>
+                {% if form.instance.pk %}
+                    Modifica Categoria
+                {% else %}
+                    Crea Nuova Categoria
+                {% endif %}
+            </h1>
+            {% if form.instance.pk %}
+                <p class="text-muted">Modifica le proprietà della categoria esistente</p>
+            {% else %}
+                <p class="text-muted">Crea una nuova categoria per organizzare le attività</p>
+            {% endif %}
+        </div>
+        <div class="col-md-4 text-md-end">
+            <a href="{% url 'categoria-list' %}" class="btn btn-outline-secondary">
+                <i class="bi bi-arrow-left"></i> Torna alla Lista
+            </a>
+        </div>
+    </div>
+
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <!-- Card principale del form -->
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">
+                        <i class="bi bi-tag"></i> Dettagli Categoria
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <!-- Messaggi di errore -->
+                    {% if form.non_field_errors %}
+                        <div class="alert alert-danger" role="alert">
+                            <i class="bi bi-exclamation-triangle"></i>
+                            {{ form.non_field_errors }}
+                        </div>
+                    {% endif %}
+
+                    <form method="post" novalidate>
+                        {% csrf_token %}
+                        
+                        <!-- Nome -->
+                        <div class="mb-4">
+                            <label for="{{ form.nome.id_for_label }}" class="form-label fw-bold">
+                                <i class="bi bi-tag text-primary"></i> {{ form.nome.label }}
+                                <span class="text-danger">*</span>
+                            </label>
+                            {{ form.nome }}
+                            {% if form.nome.errors %}
+                                <div class="text-danger small mt-1">
+                                    <i class="bi bi-exclamation-circle"></i>
+                                    {{ form.nome.errors.0 }}
+                                </div>
+                            {% endif %}
+                            <div class="form-text">
+                                Nome univoco per identificare la categoria
+                            </div>
+                        </div>
+
+                        <!-- Descrizione -->
+                        <div class="mb-4">
+                            <label for="{{ form.descrizione.id_for_label }}" class="form-label fw-bold">
+                                <i class="bi bi-text-paragraph text-primary"></i> {{ form.descrizione.label }}
+                            </label>
+                            {{ form.descrizione }}
+                            {% if form.descrizione.errors %}
+                                <div class="text-danger small mt-1">
+                                    <i class="bi bi-exclamation-circle"></i>
+                                    {{ form.descrizione.errors.0 }}
+                                </div>
+                            {% endif %}
+                            <div class="form-text">
+                                Descrizione opzionale per spiegare l'uso della categoria
+                            </div>
+                        </div>
+
+                        <!-- Colore e Icona nella stessa riga -->
+                        <div class="row">
+                            <!-- Colore -->
+                            <div class="col-md-6 mb-4">
+                                <label for="{{ form.colore.id_for_label }}" class="form-label fw-bold">
+                                    <i class="bi bi-palette text-primary"></i> {{ form.colore.label }}
+                                </label>
+                                {{ form.colore }}
+                                {% if form.colore.errors %}
+                                    <div class="text-danger small mt-1">
+                                        <i class="bi bi-exclamation-circle"></i>
+                                        {{ form.colore.errors.0 }}
+                                    </div>
+                                {% endif %}
+                                <div class="form-text">
+                                    Colore per identificare visivamente la categoria
+                                </div>
+                            </div>
+
+                            <!-- Icona -->
+                            <div class="col-md-6 mb-4">
+                                <label for="{{ form.icona.id_for_label }}" class="form-label fw-bold">
+                                    <i class="bi bi-star text-primary"></i> {{ form.icona.label }}
+                                </label>
+                                {{ form.icona }}
+                                {% if form.icona.errors %}
+                                    <div class="text-danger small mt-1">
+                                        <i class="bi bi-exclamation-circle"></i>
+                                        {{ form.icona.errors.0 }}
+                                    </div>
+                                {% endif %}
+                                <div class="form-text">
+                                    <a href="https://icons.getbootstrap.com/" target="_blank" class="text-decoration-none">
+                                        <i class="bi bi-box-arrow-up-right"></i> Cerca icone Bootstrap
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Ordinamento e Attiva nella stessa riga -->
+                        <div class="row">
+                            <!-- Ordinamento -->
+                            <div class="col-md-6 mb-4">
+                                <label for="{{ form.ordinamento.id_for_label }}" class="form-label fw-bold">
+                                    <i class="bi bi-sort-numeric-up text-primary"></i> {{ form.ordinamento.label }}
+                                </label>
+                                {{ form.ordinamento }}
+                                {% if form.ordinamento.errors %}
+                                    <div class="text-danger small mt-1">
+                                        <i class="bi bi-exclamation-circle"></i>
+                                        {{ form.ordinamento.errors.0 }}
+                                    </div>
+                                {% endif %}
+                                <div class="form-text">
+                                    Ordine di visualizzazione (0 = primo)
+                                </div>
+                            </div>
+
+                            <!-- Attiva -->
+                            <div class="col-md-6 mb-4">
+                                <label class="form-label fw-bold d-block">
+                                    <i class="bi bi-toggle-on text-primary"></i> Stato Categoria
+                                </label>
+                                <div class="form-check">
+                                    {{ form.attiva }}
+                                    <label class="form-check-label" for="{{ form.attiva.id_for_label }}">
+                                        {{ form.attiva.label }}
+                                    </label>
+                                    {% if form.attiva.errors %}
+                                        <div class="text-danger small mt-1">
+                                            <i class="bi bi-exclamation-circle"></i>
+                                            {{ form.attiva.errors.0 }}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                                <div class="form-text">
+                                    Le categorie non attive non saranno disponibili per nuove attività
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Pulsanti di azione -->
+                        <div class="d-flex gap-3 justify-content-end">
+                            <a href="{% url 'categoria-list' %}" class="btn btn-outline-secondary btn-lg">
+                                <i class="bi bi-x-circle"></i> Annulla
+                            </a>
+                            <button type="submit" class="btn btn-success btn-lg">
+                                <i class="bi bi-{% if form.instance.pk %}pencil-square{% else %}plus-circle{% endif %}"></i>
+                                {% if form.instance.pk %}
+                                    Aggiorna Categoria
+                                {% else %}
+                                    Crea Categoria
+                                {% endif %}
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Card anteprima categoria -->
+            <div class="card shadow-sm mt-4">
+                <div class="card-header bg-light">
+                    <h6 class="mb-0">
+                        <i class="bi bi-eye"></i> Anteprima Categoria
+                    </h6>
+                </div>
+                <div class="card-body text-center">
+                    <div class="preview-card d-inline-block" style="min-width: 300px;">
+                        <div class="card">
+                            <div class="card-header text-white" id="preview-header" style="background-color: #6c757d;">
+                                <div class="d-flex align-items-center justify-content-center">
+                                    <i id="preview-icon" class="bi-folder me-2 fs-5"></i>
+                                    <h6 class="mb-0" id="preview-nome">Nome Categoria</h6>
+                                </div>
+                            </div>
+                            <div class="card-body">
+                                <p class="card-text text-muted" id="preview-descrizione">
+                                    Descrizione della categoria...
+                                </p>
+                                    <div class="row text-center">
+                                        <div class="col-6">
+                                            <div class="border-end">
+                                                <h5 class="text-primary mb-1">{% if form.instance.pk %}{{ form.instance.attivita_count }}{% else %}0{% endif %}</h5>
+                                                <small class="text-muted">Totale<br>Attività</small>
+                                            </div>
+                                        </div>
+                                        <div class="col-6">
+                                            <h5 class="text-success mb-1">{% if form.instance.pk %}{{ form.instance.attivita_aperte_count }}{% else %}0{% endif %}</h5>
+                                            <small class="text-muted">Attività<br>Aperte</small>
+                                        </div>
+                                    </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Card suggerimenti -->
+            <div class="card shadow-sm mt-4 border-info">
+                <div class="card-header bg-info text-white">
+                    <h6 class="mb-0">
+                        <i class="bi bi-lightbulb"></i> Suggerimenti
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <ul class="mb-0 small">
+                        <li><strong>Nome Categoria:</strong> Scegli nomi chiari e descrittivi (es. "Bug Fix", "Nuove Funzionalità")</li>
+                        <li><strong>Colori:</strong> Usa colori coerenti (es. rosso per urgenze, verde per miglioramenti)</li>
+                        <li><strong>Icone:</strong> Seleziona icone rappresentative dal set Bootstrap Icons</li>
+                        <li><strong>Ordinamento:</strong> Organizza per priorità o frequenza d'uso</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sidebar con esempi (solo in creazione) -->
+        {% if not form.instance.pk %}
+        <div class="col-md-4">
+            <div class="card shadow-sm">
+                <div class="card-header bg-light">
+                    <h6 class="mb-0">
+                        <i class="bi bi-lightbulb"></i> Esempi di Categorie
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        <button type="button" class="btn btn-outline-primary btn-sm text-start example-btn"
+                                data-nome="Bug Fix" data-descrizione="Risoluzione di problemi e malfunzionamenti" 
+                                data-colore="#dc3545" data-icona="bi-bug">
+                            <i class="bi bi-bug text-danger"></i> Bug Fix
+                        </button>
+                        <button type="button" class="btn btn-outline-success btn-sm text-start example-btn"
+                                data-nome="Nuove Funzionalità" data-descrizione="Sviluppo di nuove caratteristiche" 
+                                data-colore="#198754" data-icona="bi-plus-circle">
+                            <i class="bi bi-plus-circle text-success"></i> Nuove Funzionalità
+                        </button>
+                        <button type="button" class="btn btn-outline-warning btn-sm text-start example-btn"
+                                data-nome="Manutenzione" data-descrizione="Attività di manutenzione e aggiornamento" 
+                                data-colore="#ffc107" data-icona="bi-tools">
+                            <i class="bi bi-tools text-warning"></i> Manutenzione
+                        </button>
+                        <button type="button" class="btn btn-outline-info btn-sm text-start example-btn"
+                                data-nome="Configurazione" data-descrizione="Setup e configurazione sistemi" 
+                                data-colore="#0dcaf0" data-icona="bi-gear">
+                            <i class="bi bi-gear text-info"></i> Configurazione
+                        </button>
+                        <button type="button" class="btn btn-outline-dark btn-sm text-start example-btn"
+                                data-nome="Documentazione" data-descrizione="Creazione e aggiornamento documentazione" 
+                                data-colore="#495057" data-icona="bi-book">
+                            <i class="bi bi-book text-dark"></i> Documentazione
+                        </button>
+                    </div>
+                    <small class="text-muted mt-3 d-block">
+                        Clicca su un esempio per compilare automaticamente il form
+                    </small>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Toast per messaggi -->
+{% if messages %}
+<div class="position-fixed bottom-0 end-0 p-3" style="z-index: 1050">
+    {% for message in messages %}
+    <div class="toast align-items-center text-white bg-{{ message.tags }} border-0" role="alert" aria-live="assertive" aria-atomic="true">
+        <div class="d-flex">
+            <div class="toast-body">
+                {{ message }}
+            </div>
+            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% endif %}
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Inizializza i toast
+    var toastElList = [].slice.call(document.querySelectorAll('.toast'));
+    var toastList = toastElList.map(function (toastEl) {
+        var toast = new bootstrap.Toast(toastEl);
+        toast.show();
+        return toast;
+    });
+
+    // Elementi del form e anteprima
+    const nomeField = document.querySelector('#id_nome');
+    const descrizioneField = document.querySelector('#id_descrizione');
+    const coloreField = document.querySelector('#id_colore');
+    const iconaField = document.querySelector('#id_icona');
+    
+    const previewNome = document.querySelector('#preview-nome');
+    const previewDescrizione = document.querySelector('#preview-descrizione');
+    const previewHeader = document.querySelector('#preview-header');
+    const previewIcon = document.querySelector('#preview-icon');
+
+    // Aggiorna anteprima in tempo reale
+    function updatePreview() {
+        const nome = nomeField.value || 'Nome Categoria';
+        const descrizione = descrizioneField.value || 'Descrizione della categoria...';
+        const colore = coloreField.value || '#6c757d';
+        const icona = iconaField.value || 'bi-folder';
+
+        previewNome.textContent = nome;
+        previewDescrizione.textContent = descrizione;
+        previewHeader.style.backgroundColor = colore;
+        
+        // Aggiorna icona
+        previewIcon.className = `${icona} me-2 fs-5`;
+    }
+
+    // Event listeners per aggiornamento anteprima
+    [nomeField, descrizioneField, coloreField, iconaField].forEach(field => {
+        if (field) {
+            field.addEventListener('input', updatePreview);
+        }
+    });
+
+    // Carica esempio al click
+    document.querySelectorAll('.example-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const nome = this.dataset.nome;
+            const descrizione = this.dataset.descrizione;
+            const colore = this.dataset.colore;
+            const icona = this.dataset.icona;
+
+            nomeField.value = nome;
+            descrizioneField.value = descrizione;
+            coloreField.value = colore;
+            iconaField.value = icona;
+
+            updatePreview();
+
+            // Evidenzia il form
+            document.querySelector('.card-body form').scrollIntoView({ 
+                behavior: 'smooth', 
+                block: 'start' 
+            });
+        });
+    });
+
+    // Aggiorna anteprima al caricamento
+    updatePreview();
+
+    // Validazione e submit
+    const form = document.querySelector('form');
+    const submitBtn = form.querySelector('button[type="submit"]');
+
+    form.addEventListener('submit', function() {
+        submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Salvataggio...';
+        submitBtn.disabled = true;
+    });
+});
+</script>
+
+<style>
+/* Stili personalizzati per il form categoria */
+.form-control:focus {
+    border-color: #0d6efd;
+    box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25);
+}
+
+.preview-card {
+    transition: all 0.3s ease;
+}
+
+.example-btn {
+    transition: all 0.2s ease;
+}
+
+.example-btn:hover {
+    transform: translateX(5px);
+}
+
+.card {
+    transition: transform 0.2s ease-in-out;
+}
+
+.card:hover {
+    transform: translateY(-2px);
+}
+
+/* Color picker styling */
+input[type="color"] {
+    width: 100%;
+    height: 40px;
+    border-radius: 0.375rem;
+    border: 1px solid #ced4da;
+    cursor: pointer;
+}
+
+input[type="color"]::-webkit-color-swatch {
+    border-radius: 0.25rem;
+    border: none;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .btn-lg {
+        width: 100%;
+        margin-bottom: 0.5rem;
+    }
+    
+    .d-flex.gap-3 {
+        flex-direction: column;
+    }
+}
+</style>
+{% endblock %}

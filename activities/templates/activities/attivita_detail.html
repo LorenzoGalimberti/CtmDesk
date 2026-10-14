@@ -1,0 +1,725 @@
+{% extends "base.html" %}
+
+{% block title %}{{ attivita.nome_flusso }}{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <!-- Breadcrumb -->
+    <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{% url 'activities-dashboard' %}">Dashboard</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'attivita-list' %}">Attività</a></li>
+            <li class="breadcrumb-item active">{{ attivita.nome_flusso|truncatewords:3 }}</li>
+        </ol>
+    </nav>
+
+    <!-- Header con stato e azioni -->
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <h1 class="display-6 text-primary mb-2">
+                <i class="bi bi-activity"></i> {{ attivita.nome_flusso }}
+            </h1>
+            <div class="mb-3">
+                {% if attivita.stato == 'aperta' %}
+                    <span class="badge bg-success fs-6 me-2">
+                        <i class="bi bi-check-circle"></i> Attività Aperta
+                    </span>
+                {% else %}
+                    <span class="badge bg-secondary fs-6 me-2">
+                        <i class="bi bi-x-circle"></i> Attività Chiusa
+                    </span>
+                {% endif %}
+                <small class="text-muted">
+                    Creata il {{ attivita.data_creazione|date:"d/m/Y alle H:i" }}
+                </small>
+            </div>
+        </div>
+        <div class="col-md-4 text-md-end">
+            <div class="btn-group" role="group">
+                <a href="{% url 'attivita-update' attivita.pk %}" class="btn btn-warning">
+                    <i class="bi bi-pencil-square"></i> Modifica
+                </a>
+                {% if attivita.stato == 'aperta' %}
+                    <a href="{% url 'attivita-chiudi' attivita.pk %}" class="btn btn-outline-secondary"
+                       onclick="return confirm('Sei sicuro di voler chiudere questa attività?')">
+                        <i class="bi bi-check"></i> Chiudi
+                    </a>
+                {% else %}
+                    <a href="{% url 'attivita-riapri' attivita.pk %}" class="btn btn-outline-success"
+                       onclick="return confirm('Sei sicuro di voler riaprire questa attività?')">
+                        <i class="bi bi-arrow-repeat"></i> Riapri
+                    </a>
+                {% endif %}
+                <a href="{% url 'attivita-delete' attivita.pk %}" class="btn btn-outline-danger"
+                   onclick="return confirm('Sei sicuro di voler eliminare questa attività?')">
+                    <i class="bi bi-trash"></i> Elimina
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Colonna principale - Dettagli attività -->
+        <div class="col-md-8">
+            <!-- Card principale con informazioni -->
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0"><i class="bi bi-info-circle"></i> Informazioni Generali</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-3">
+                        <div class="col-sm-3"><strong>Nome Flusso:</strong></div>
+                        <div class="col-sm-9">{{ attivita.nome_flusso }}</div>
+                    </div>
+                    
+                    {% if attivita.categoria %}
+                    <div class="row mb-3">
+                        <div class="col-sm-3"><strong>Categoria:</strong></div>
+                        <div class="col-sm-9">
+                            <span class="badge fs-6" style="background-color: {{ attivita.categoria.colore|default:'#6c757d' }}; color: white;">
+                                <i class="{{ attivita.categoria.icona|default:'bi-folder' }}"></i> {{ attivita.categoria.nome }}
+                            </span>
+                            {% if attivita.categoria.descrizione %}
+                                <br><small class="text-muted">{{ attivita.categoria.descrizione }}</small>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    <div class="row mb-3">
+                        <div class="col-sm-3"><strong>Stato:</strong></div>
+                        <div class="col-sm-9">
+                            {% if attivita.stato == 'aperta' %}
+                                <span class="badge bg-success">
+                                    <i class="bi bi-check-circle"></i> Aperta
+                                </span>
+                            {% else %}
+                                <span class="badge bg-secondary">
+                                    <i class="bi bi-x-circle"></i> Chiusa
+                                </span>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-sm-3"><strong>Data Creazione:</strong></div>
+                        <div class="col-sm-9">{{ attivita.data_creazione|date:"d/m/Y alle H:i" }}</div>
+                    </div>
+
+                    {% if attivita.data_chiusura %}
+                    <div class="row mb-3">
+                        <div class="col-sm-3"><strong>Data Chiusura:</strong></div>
+                        <div class="col-sm-9">{{ attivita.data_chiusura|date:"d/m/Y alle H:i" }}</div>
+                    </div>
+                    {% endif %}
+
+                    {% if attivita.descrizione %}
+                    <div class="row mb-3">
+                        <div class="col-sm-3"><strong>Descrizione:</strong></div>
+                        <div class="col-sm-9">{{ attivita.descrizione|linebreaks }}</div>
+                    </div>
+                    {% endif %}
+
+                    {% if attivita.note %}
+                    <div class="row mb-3">
+                        <div class="col-sm-3"><strong>Note:</strong></div>
+                        <div class="col-sm-9">{{ attivita.note|linebreaks }}</div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Sezione Task Collegati -->
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                    <h6 class="mb-0">
+                        <i class="bi bi-list-check"></i> Task To-Do Collegati
+                        {% if attivita.has_tasks %}
+                            <span class="badge bg-primary">{{ attivita.task_totali_count }}</span>
+                        {% endif %}
+                    </h6>
+                    {% if attivita.is_aperta %}
+                    <a href="{% url 'todo:task_list' %}?tipo=activity" class="btn btn-sm btn-outline-primary">
+                        <i class="bi bi-eye"></i> Vedi tutti i task
+                    </a>
+                    {% endif %}
+                </div>
+                
+                <div class="card-body">
+                    {% if attivita.has_tasks %}
+                        <div class="row g-3">
+                            {% for task in tasks_collegati %}
+                            <div class="col-12">
+                                <div class="card border {% if task.completed %}border-success bg-light{% elif task.archiviato %}border-secondary{% else %}border-primary{% endif %}">
+                                    <div class="card-body py-3">
+                                        <div class="d-flex align-items-center justify-content-between">
+                                            <div class="d-flex align-items-center flex-grow-1">
+                                                <div class="form-check me-3">
+                                                    <input type="checkbox" 
+                                                           class="form-check-input task-checkbox" 
+                                                           id="task-check-{{ task.id }}"
+                                                           data-task-id="{{ task.id }}"
+                                                           {% if task.completed %}checked{% endif %}
+                                                           {% if task.archiviato %}disabled{% endif %}>
+                                                </div>
+                                                <div class="flex-grow-1">
+                                                    <h6 class="mb-1 {% if task.completed %}text-decoration-line-through text-muted{% endif %}">
+                                                        <i class="bi bi-clipboard-check text-info me-2"></i>
+                                                        {{ task.title }}
+                                                    </h6>
+                                                    {% if task.description %}
+                                                        <p class="text-muted small mb-2">{{ task.description|truncatewords:15 }}</p>
+                                                    {% endif %}
+                                                    <div class="d-flex align-items-center gap-3">
+                                                        <small class="text-muted">
+                                                            <i class="bi bi-calendar3 me-1"></i>
+                                                            {{ task.data_creazione|date:"d/m/Y" }}
+                                                        </small>
+                                                        {% if task.cliente %}
+                                                            <span class="badge" 
+                                                                  style="background-color: {{ task.cliente.colore_sfondo }}; color: {{ task.cliente.colore_testo }};">
+                                                                {{ task.cliente.nome }}
+                                                            </span>
+                                                        {% endif %}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="text-end">
+                                                {% if task.completed and not task.archiviato %}
+                                                    <span class="badge bg-success">
+                                                        <i class="bi bi-check-circle me-1"></i>Completato
+                                                    </span>
+                                                {% elif task.archiviato %}
+                                                    <span class="badge bg-secondary">
+                                                        <i class="bi bi-archive me-1"></i>Archiviato
+                                                    </span>
+                                                {% else %}
+                                                    <span class="badge bg-warning">
+                                                        <i class="bi bi-clock me-1"></i>In corso
+                                                    </span>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        
+                        <!-- Statistiche rapide sui task -->
+                        <div class="mt-4 p-3 bg-light rounded stats-section">
+                            <div class="row text-center">
+                                <div class="col-md-3">
+                                    <h5 class="text-primary mb-1" id="stat-totali">{{ attivita.task_totali_count }}</h5>
+                                    <small class="text-muted">Totale Task</small>
+                                </div>
+                                <div class="col-md-3">
+                                    <h5 class="text-success mb-1" id="stat-completati">{{ attivita.task_completati_count }}</h5>
+                                    <small class="text-muted">Completati</small>
+                                </div>
+                                <div class="col-md-3">
+                                    <h5 class="text-warning mb-1" id="stat-in-corso">{{ attivita.task_in_corso_count }}</h5>
+                                    <small class="text-muted">In corso</small>
+                                </div>
+                                <div class="col-md-3">
+                                    <h5 class="text-secondary mb-1" id="stat-archiviati">{{ attivita.task_archiviati_count }}</h5>
+                                    <small class="text-muted">Archiviati</small>
+                                </div>
+                            </div>
+                            
+                            <!-- Barra di progresso -->
+                            {% if attivita.task_totali_count > 0 %}
+                            <div class="mt-3">
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <small class="text-muted fw-bold">Progresso Completamento</small>
+                                    <small class="text-muted" id="progress-text">{{ attivita.task_completion_percentage }}%</small>
+                                </div>
+                                <div class="progress" style="height: 8px;">
+                                    <div class="progress-bar bg-success" 
+                                         role="progressbar" 
+                                         style="width: {{ attivita.task_completion_percentage }}%"
+                                         aria-valuenow="{{ attivita.task_completion_percentage }}" 
+                                         aria-valuemin="0" 
+                                         aria-valuemax="100"
+                                         id="progress-bar">
+                                    </div>
+                                </div>
+                                {% if attivita.all_tasks_completed %}
+                                    <small class="text-success fw-bold mt-2 d-block" id="completion-message">
+                                        <i class="bi bi-check-circle-fill me-1"></i>Tutti i task sono stati completati!
+                                    </small>
+                                {% endif %}
+                            </div>
+                            {% endif %}
+                        </div>
+                        
+                    {% else %}
+                        <div class="text-center py-4">
+                            <i class="bi bi-list-check display-4 text-muted"></i>
+                            <h6 class="text-muted mt-2">Nessun task collegato</h6>
+                            <p class="text-muted small">
+                                {% if attivita.is_aperta %}
+                                    I task to-do per questa attività sono stati creati automaticamente.
+                                    <br>Controlla la <a href="{% url 'todo:task_list' %}" class="text-decoration-none">lista task</a> 
+                                    per gestirli.
+                                {% else %}
+                                    Questa attività è chiusa e non ha task associati.
+                                {% endif %}
+                            </p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Sezione Allegati -->
+            <div class="card shadow-sm mt-4">
+                <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                    <h6 class="mb-0">
+                        <i class="bi bi-paperclip"></i> Allegati 
+                        {% if allegati %}
+                            <span class="badge bg-primary">{{ allegati|length }}</span>
+                        {% endif %}
+                    </h6>
+                    <button class="btn btn-sm btn-outline-primary" type="button" data-bs-toggle="collapse" data-bs-target="#uploadSection">
+                        <i class="bi bi-plus-circle"></i> Aggiungi File
+                    </button>
+                </div>
+                
+                <!-- Sezione Upload -->
+                <div class="collapse" id="uploadSection">
+                    <div class="card-body border-bottom bg-light">
+                        <form method="post" enctype="multipart/form-data" action="{% url 'carica-allegato' attivita.id %}">
+                            {% csrf_token %}
+                            <div class="row g-3">
+                                <div class="col-md-8">
+                                    {{ allegato_form.file }}
+                                </div>
+                                <div class="col-md-4">
+                                    {{ allegato_form.descrizione }}
+                                </div>
+                                <div class="col-12">
+                                    <button type="submit" class="btn btn-success">
+                                        <i class="bi bi-upload"></i> Carica File
+                                    </button>
+                                    <small class="text-muted ms-3">
+                                        Formati supportati: PDF, DOC, XLS, PPT, IMG, ZIP, TXT (max 50MB)
+                                    </small>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+                
+                <!-- Lista Allegati -->
+                <div class="card-body">
+                    {% if allegati %}
+                        <div class="row g-3">
+                            {% for allegato in allegati %}
+                            <div class="col-md-6 col-lg-4">
+                                <div class="card border h-100">
+                                    <div class="card-body p-3">
+                                        <div class="d-flex align-items-start">
+                                            <div class="me-3">
+                                                <i class="{{ allegato.icona_file }} fs-2 text-primary"></i>
+                                            </div>
+                                            <div class="flex-grow-1 min-w-0">
+                                                <h6 class="card-title mb-1 text-truncate" title="{{ allegato.nome_originale }}">
+                                                    {{ allegato.nome_originale|truncatechars:25 }}
+                                                </h6>
+                                                {% if allegato.descrizione %}
+                                                    <p class="card-text small text-muted mb-2">{{ allegato.descrizione }}</p>
+                                                {% endif %}
+                                                <p class="card-text">
+                                                    <small class="text-muted">
+                                                        <i class="bi bi-hdd"></i> {{ allegato.dimensione_formattata }}<br>
+                                                        <i class="bi bi-calendar"></i> {{ allegato.caricato_il|date:"d/m/Y H:i" }}
+                                                    </small>
+                                                </p>
+                                            </div>
+                                        </div>
+                                        
+                                        <!-- Azioni per l'allegato -->
+                                        <div class="mt-3 d-flex gap-1">
+                                            {% if allegato.is_image %}
+                                                <button type="button" 
+                                                        class="btn btn-sm btn-outline-info flex-fill"
+                                                        data-bs-toggle="modal" 
+                                                        data-bs-target="#imageModal{{ allegato.id }}"
+                                                        title="Anteprima immagine">
+                                                    <i class="bi bi-eye"></i>
+                                                </button>
+                                            {% elif allegato.is_pdf %}
+                                                <a href="{% url 'anteprima-allegato' allegato.id %}" 
+                                                   class="btn btn-sm btn-outline-info flex-fill"
+                                                   target="_blank"
+                                                   title="Apri PDF">
+                                                    <i class="bi bi-eye"></i>
+                                                </a>
+                                            {% elif allegato.is_text %}
+                                                <a href="{% url 'anteprima-allegato' allegato.id %}" 
+                                                   class="btn btn-sm btn-outline-info flex-fill"
+                                                   title="Visualizza testo">
+                                                    <i class="bi bi-eye"></i>
+                                                </a>
+                                            {% else %}
+                                                <a href="{% url 'anteprima-allegato' allegato.id %}" 
+                                                   class="btn btn-sm btn-outline-info flex-fill"
+                                                   title="Info file">
+                                                    <i class="bi bi-info-circle"></i>
+                                                </a>
+                                            {% endif %}
+                                            
+                                            <a href="{% url 'scarica-allegato' allegato.id %}" 
+                                               class="btn btn-sm btn-outline-primary flex-fill"
+                                               title="Scarica file">
+                                                <i class="bi bi-download"></i>
+                                            </a>
+                                            
+                                            <a href="{% url 'elimina-allegato' allegato.id %}" 
+                                               class="btn btn-sm btn-outline-danger flex-fill"
+                                               onclick="return confirm('Sei sicuro di voler eliminare questo file?')"
+                                               title="Elimina file">
+                                                <i class="bi bi-trash"></i>
+                                            </a>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Modal per anteprima immagini -->
+                            {% if allegato.is_image %}
+                            <div class="modal fade" id="imageModal{{ allegato.id }}" tabindex="-1">
+                                <div class="modal-dialog modal-xl">
+                                    <div class="modal-content">
+                                        <div class="modal-header">
+                                            <h5 class="modal-title">
+                                                <i class="{{ allegato.icona_file }}"></i> 
+                                                {{ allegato.nome_originale }}
+                                            </h5>
+                                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                        </div>
+                                        <div class="modal-body text-center p-2">
+                                            <div class="position-relative">
+                                                <img src="{% url 'anteprima-allegato' allegato.id %}" 
+                                                     class="img-fluid rounded shadow"
+                                                     alt="{{ allegato.nome_originale }}"
+                                                     style="max-height: 70vh; width: auto;">
+                                            </div>
+                                            <div class="mt-3">
+                                                <small class="text-muted">
+                                                    <i class="bi bi-info-circle"></i>
+                                                    {{ allegato.dimensione_formattata }} • 
+                                                    Caricato il {{ allegato.caricato_il|date:"d/m/Y alle H:i" }}
+                                                </small>
+                                            </div>
+                                        </div>
+                                        <div class="modal-footer">
+                                            <a href="{% url 'scarica-allegato' allegato.id %}" class="btn btn-primary">
+                                                <i class="bi bi-download"></i> Scarica Originale
+                                            </a>
+                                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                                                <i class="bi bi-x-lg"></i> Chiudi
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endif %}
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="text-center py-4">
+                            <i class="bi bi-paperclip display-4 text-muted"></i>
+                            <h6 class="text-muted mt-2">Nessun allegato</h6>
+                            <p class="text-muted small">Aggiungi file per documentare questa attività</p>
+                            <button class="btn btn-outline-primary" 
+                                    type="button" 
+                                    data-bs-toggle="collapse" 
+                                    data-bs-target="#uploadSection">
+                                <i class="bi bi-plus-circle"></i> Carica Primo File
+                            </button>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Colonna laterale - Informazioni richiedente e cliente -->
+        <div class="col-md-4">
+            <!-- Card Richiedente -->
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h6 class="mb-0"><i class="bi bi-person"></i> Richiedente</h6>
+                </div>
+                <div class="card-body">
+                    <div class="text-center mb-3">
+                        <div class="avatar bg-primary text-white rounded-circle d-inline-flex align-items-center justify-content-center" 
+                             style="width: 60px; height: 60px; font-size: 24px;">
+                            {{ attivita.richiedente.nome.0 }}{{ attivita.richiedente.cognome.0 }}
+                        </div>
+                    </div>
+                    
+                    <div class="text-center">
+                        <h6 class="mb-1">
+                            <a href="{% url 'richiedente-detail' attivita.richiedente.pk %}" 
+                               class="text-decoration-none">
+                                {{ attivita.richiedente.nome }} {{ attivita.richiedente.cognome }}
+                            </a>
+                        </h6>
+                        {% if attivita.richiedente.email %}
+                        <p class="text-muted mb-2">
+                            <i class="bi bi-envelope"></i> {{ attivita.richiedente.email }}
+                        </p>
+                        {% endif %}
+                        {% if attivita.richiedente.telefono %}
+                        <p class="text-muted mb-2">
+                            <i class="bi bi-telephone"></i> {{ attivita.richiedente.telefono }}
+                        </p>
+                        {% endif %}
+                        
+                        {% if attivita.richiedente.attivo %}
+                            <span class="badge bg-success">Attivo</span>
+                        {% else %}
+                            <span class="badge bg-secondary">Non Attivo</span>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Card Cliente -->
+            <div class="card shadow-sm mb-4">
+                <div class="card-header text-white" 
+                     style="background-color: {{ attivita.richiedente.cliente.colore_sfondo|default:'#6c757d' }}; color: {{ attivita.richiedente.cliente.colore_testo|default:'#fff' }};">
+                    <h6 class="mb-0"><i class="bi bi-building"></i> Cliente</h6>
+                </div>
+                <div class="card-body text-center">
+                    <h5 class="mb-3">{{ attivita.richiedente.cliente.nome }}</h5>
+                    <div class="d-flex justify-content-center">
+                        <span class="badge fs-6" 
+                              style="background-color: {{ attivita.richiedente.cliente.colore_sfondo|default:'#6c757d' }}; color: {{ attivita.richiedente.cliente.colore_testo|default:'#fff' }};">
+                            {{ attivita.richiedente.cliente.nome }}
+                        </span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Card Statistiche rapide -->
+            <div class="card shadow-sm">
+                <div class="card-header bg-light">
+                    <h6 class="mb-0"><i class="bi bi-graph-up"></i> Statistiche</h6>
+                </div>
+                <div class="card-body">
+                    <div class="row text-center">
+                        <div class="col-6">
+                            <div class="border-end">
+                                <h4 class="text-primary mb-1">{{ attivita.richiedente.attivita_totali_count }}</h4>
+                                <small class="text-muted">Totale Attività<br>Richiedente</small>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <h4 class="text-success mb-1">{{ attivita.richiedente.attivita_aperte_count }}</h4>
+                            <small class="text-muted">Attività Aperte<br>Richiedente</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Pulsanti di navigazione -->
+    <div class="mt-4 d-flex gap-3 justify-content-center">
+        <a href="{% url 'attivita-list' %}" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left"></i> Torna alla Lista
+        </a>
+        <a href="{% url 'activities-dashboard' %}" class="btn btn-outline-primary">
+            <i class="bi bi-house"></i> Dashboard
+        </a>
+    </div>
+</div>
+
+<!-- Toast per messaggi -->
+{% if messages %}
+<div class="position-fixed bottom-0 end-0 p-3" style="z-index: 1050">
+    {% for message in messages %}
+    <div class="toast align-items-center text-white bg-{{ message.tags }} border-0" role="alert" aria-live="assertive" aria-atomic="true">
+        <div class="d-flex">
+            <div class="toast-body">
+                {{ message }}
+            </div>
+            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% endif %}
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Inizializza i toast per i messaggi
+    var toastElList = [].slice.call(document.querySelectorAll('.toast'));
+    var toastList = toastElList.map(function (toastEl) {
+        var toast = new bootstrap.Toast(toastEl);
+        toast.show();
+        return toast;
+    });
+    
+    // Gestione anteprima immagini con zoom
+    const imageModals = document.querySelectorAll('[id^="imageModal"]');
+    imageModals.forEach(modal => {
+        const img = modal.querySelector('img');
+        if (img) {
+            img.addEventListener('click', function() {
+                this.style.cursor = this.style.transform === 'scale(1.5)' ? 'zoom-in' : 'zoom-out';
+                this.style.transform = this.style.transform === 'scale(1.5)' ? 'scale(1)' : 'scale(1.5)';
+                this.style.transition = 'transform 0.3s ease';
+            });
+        }
+    });
+
+    // Gestione checkbox task collegati
+    document.querySelectorAll('.task-checkbox').forEach(function(checkbox) {
+        checkbox.addEventListener('change', function() {
+            const taskId = this.dataset.taskId;
+            const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+            
+            fetch(`/todo/complete/${taskId}/`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'X-CSRFToken': csrfToken
+                },
+                body: `csrfmiddlewaretoken=${csrfToken}`
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    const card = this.closest('.card');
+                    const title = card.querySelector('h6');
+                    const badge = card.querySelector('.badge');
+                    
+                    if (data.completed) {
+                        // Task completato
+                        title.classList.add('text-decoration-line-through', 'text-muted');
+                        badge.className = 'badge bg-success';
+                        badge.innerHTML = '<i class="bi bi-check-circle me-1"></i>Completato';
+                        
+                        // Mostra notifica se l'attività è stata chiusa automaticamente
+                        if (data.activity_closed) {
+                            showToast('success', `Task completato! L'attività "${data.activity_name}" è stata chiusa automaticamente.`);
+                            // Ricarica la pagina dopo 2 secondi per mostrare lo stato aggiornato
+                            setTimeout(() => location.reload(), 2000);
+                        }
+                    } else {
+                        // Task riaperto
+                        title.classList.remove('text-decoration-line-through', 'text-muted');
+                        badge.className = 'badge bg-warning';
+                        badge.innerHTML = '<i class="bi bi-clock me-1"></i>In corso';
+                    }
+                    
+                    // Aggiorna le statistiche
+                    updateTaskStats();
+                }
+            })
+            .catch(error => {
+                console.error('Errore:', error);
+                // Ripristina lo stato del checkbox in caso di errore
+                this.checked = !this.checked;
+                showToast('error', 'Errore nell\'aggiornamento del task. Riprova.');
+            });
+        });
+    });
+    
+    // Funzione per aggiornare le statistiche dei task in tempo reale
+    function updateTaskStats() {
+        const checkboxes = document.querySelectorAll('.task-checkbox');
+        const completedTasks = document.querySelectorAll('.task-checkbox:checked:not([disabled])');
+        const archivedTasks = document.querySelectorAll('.task-checkbox[disabled]');
+        const totalTasks = checkboxes.length;
+        const inProgressTasks = totalTasks - completedTasks.length - archivedTasks.length;
+        
+        // Aggiorna i contatori
+        const elements = {
+            total: document.getElementById('stat-totali'),
+            completed: document.getElementById('stat-completati'),
+            inProgress: document.getElementById('stat-in-corso'),
+            archived: document.getElementById('stat-archiviati')
+        };
+        
+        if (elements.total) elements.total.textContent = totalTasks;
+        if (elements.completed) elements.completed.textContent = completedTasks.length;
+        if (elements.inProgress) elements.inProgress.textContent = inProgressTasks;
+        if (elements.archived) elements.archived.textContent = archivedTasks.length;
+        
+        // Aggiorna la barra di progresso
+        const progressBar = document.getElementById('progress-bar');
+        const progressText = document.getElementById('progress-text');
+        
+        if (progressBar && totalTasks > 0) {
+            const percentage = Math.round((completedTasks.length / totalTasks) * 100);
+            progressBar.style.width = percentage + '%';
+            progressBar.setAttribute('aria-valuenow', percentage);
+            
+            if (progressText) {
+                progressText.textContent = percentage + '%';
+            }
+            
+            // Mostra/nascondi messaggio di completamento
+            const completionMessage = document.getElementById('completion-message');
+            if (percentage === 100) {
+                if (!completionMessage) {
+                    const message = document.createElement('small');
+                    message.id = 'completion-message';
+                    message.className = 'text-success fw-bold mt-2 d-block';
+                    message.innerHTML = '<i class="bi bi-check-circle-fill me-1"></i>Tutti i task sono stati completati!';
+                    progressBar.closest('.mt-3').appendChild(message);
+                }
+            } else if (completionMessage) {
+                completionMessage.remove();
+            }
+        }
+    }
+    
+    // Funzione per mostrare toast notifications
+    function showToast(type, message) {
+        const bgClass = type === 'success' ? 'bg-success' : 'bg-danger';
+        const icon = type === 'success' ? 'bi-check-circle' : 'bi-exclamation-triangle';
+        
+        const toastContainer = document.createElement('div');
+        toastContainer.className = 'position-fixed bottom-0 end-0 p-3';
+        toastContainer.style.zIndex = '1050';
+        
+        const toast = document.createElement('div');
+        toast.className = `toast align-items-center text-white ${bgClass} border-0`;
+        toast.setAttribute('role', 'alert');
+        toast.setAttribute('aria-live', 'assertive');
+        toast.setAttribute('aria-atomic', 'true');
+        
+        toast.innerHTML = `
+            <div class="d-flex">
+                <div class="toast-body">
+                    <i class="${icon} me-2"></i>${message}
+                </div>
+                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+            </div>
+        `;
+        
+        toastContainer.appendChild(toast);
+        document.body.appendChild(toastContainer);
+        
+        const bsToast = new bootstrap.Toast(toast);
+        bsToast.show();
+        
+        toast.addEventListener('hidden.bs.toast', function() {
+            toastContainer.remove();
+        });
+    }
+    
+    // Inizializza tooltips
+    document.querySelectorAll('[title]').forEach(function(element) {
+        new bootstrap.Tooltip(element);
+    });
+});
+</script>
+{% endblock %}

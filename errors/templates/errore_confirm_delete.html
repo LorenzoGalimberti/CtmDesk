@@ -1,0 +1,12 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="container">
+    <h1>Conferma Eliminazione</h1>
+    <p>Sei sicuro di voler eliminare "{{ errore }}"?</p>
+    <form method="post">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-danger">Elimina</button>
+        <a href="{% url 'errore_list' %}" class="btn btn-secondary">Annulla</a>
+    </form>
+</div>
+{% endblock %}

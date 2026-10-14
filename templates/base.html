@@ -1,0 +1,194 @@
+{% load static %}
+<!doctype html>
+<html lang="it">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}My Web App{% endblock %}</title>
+    <link rel="icon" type="image/x-icon" href="{% static 'images/logo2.png' %}">
+
+    <!-- Inclusione di Bootstrap (comune a tutte le pagine) -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Aggiungi il link per Bootstrap Icons nel head -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
+
+    <style>
+      /* Assicura che il body prenda tutta l'altezza */
+      html, body {
+        height: 100%;
+        margin: 0;
+      }
+
+      /* Rende la navbar e il footer fissi */
+      .navbar {
+        position: fixed;
+        top: 0;
+        width: 100%;
+        z-index: 1030;  /* Assicura che la navbar stia sopra gli altri contenuti */
+      }
+
+      .footer {
+        position: fixed;
+        bottom: 0;
+        width: 100%;
+        background-color: #f8f9fa;
+        padding: 10px 0;
+        text-align: center;
+        z-index: 1020;
+      }
+
+      /* Spazio per il contenuto centrale */
+      .content {
+        padding-top: 60px;  /* Spazio per evitare che il contenuto venga coperto dalla navbar */
+        padding-bottom: 60px;  /* Spazio per evitare che il contenuto venga coperto dal footer */
+        overflow-y: auto;
+        min-height: calc(100vh - 120px); /* Assicura che il contenuto centrale prenda il resto della pagina tra navbar e footer */
+      }
+
+      /* Per il footer */
+      footer {
+        background-color: #f8f9fa;
+        padding: 2px;
+        position: fixed;
+        bottom: 0;
+        width: 100%;
+        text-align: center;
+      }
+    </style>
+
+    {% block extra_head %}
+    <!-- Spazio per inclusioni specifiche di stile nei template figli -->
+    {% endblock %}
+  </head>
+  <body>
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-light bg-light">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="{% url 'home' %}">
+                <img src="{% static 'images/logo2.png' %}" alt="Logo" style="height: 40px;">
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" 
+                    aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse w-100" id="navbarNav">
+                <ul class="navbar-nav w-100">
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.resolver_match.url_name == 'errore_list' %}active{% endif %}" 
+                           href="{% url 'errore_list' %}">
+                            Errori
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.resolver_match.url_name == 'calendario' %}active{% endif %}" 
+                           href="{% url 'calendario' %}">
+                            Calendario
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.resolver_match.url_name == 'procedura-list' %}active{% endif %}" 
+                           href="{% url 'procedura-list' %}">
+                            Procedure
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.resolver_match.app_name == 'activities' %}active{% endif %}" 
+                           href="{% url 'activities-dashboard' %}">
+                            <i class="bi bi-activity"></i> Attività
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.resolver_match.url_name == 'diario_del_giorno' or request.resolver_match.app_name == 'diario' %}active{% endif %}" 
+                           href="{% url 'diario:diario_del_giorno' anno=today.year mese=today.month giorno=today.day %}">
+                            Diario
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.resolver_match.url_name == 'task_list' or request.resolver_match.app_name == 'todo' %}active{% endif %}" 
+                           href="{% url 'todo:task_list' %}">
+                            To do List
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.resolver_match.app_name == 'tools' %}active{% endif %}" 
+                           href="{% url 'tools:index' %}">
+                            Tools
+                        </a>
+                    </li>
+                    {% if request.resolver_match.app_name == "todo" %}
+                    <li class="nav-item lh-small fade-in-out small" id="fadeTaskLink">
+                        <a class="nav-link bg-danger rounded-pill text-white small" href="{% url 'todo:all_task' %}">
+                            Tutti i Task
+                        </a>
+                    </li>
+                    {% endif %}
+                    
+                    <!-- Link aggiuntivi per Activities -->
+                    {% if request.resolver_match.app_name == "activities" %}
+                    <li class="nav-item">
+                        <a class="nav-link {% if 'attivita-list' in request.resolver_match.url_name %}text-primary{% endif %}" 
+                           href="{% url 'attivita-list' %}">
+                            <i class="bi bi-list-ul"></i> Lista Attività
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if 'categoria-list' in request.resolver_match.url_name %}text-primary{% endif %}" 
+                           href="{% url 'categoria-list' %}">
+                            <i class="bi bi-tags"></i> Categorie
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if 'richiedente-list' in request.resolver_match.url_name %}text-primary{% endif %}" 
+                           href="{% url 'richiedente-list' %}">
+                            <i class="bi bi-people"></i> Richiedenti
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link text-success" href="{% url 'attivita-create' %}">
+                            <i class="bi bi-plus-circle"></i> Nuova Attività
+                        </a>
+                    </li>
+                    {% endif %}
+                    
+                     <!-- Barra di ricerca visibile solo nel Diario -->
+                     {% if request.resolver_match.app_name == "diario" %}
+                     <div class="ms-auto d-flex">
+                         <form class="d-flex" method="get" action="{% url 'diario:diario_list' %}">
+                             <input 
+                                 type="text" 
+                                 name="q" 
+                                 class="form-control me-2" 
+                                 placeholder="Cerca nel diario..." 
+                                 value="{{ request.GET.q|default:'' }}">
+                             <button class="btn btn-outline-primary" type="submit">Cerca</button>
+                         </form>
+                     </div>
+                     {% endif %}
+                     
+                    {% if request.resolver_match.url_name == "calendario" %}
+                    <a href="{% url 'lista_eventi' %}" class="btn btn-primary ms-auto">
+                        Lista Eventi
+                    </a>
+                    {% endif %}
+                </ul>
+            </div>
+        </div>
+    </nav>
+    
+
+    <!-- Main Content -->
+    <div class="container mt-4 content">
+        {% block content %}
+        <h1>Benvenuto nella Gestione Errori</h1>
+        {% endblock %}
+    </div>
+
+    
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
+
+    {% block extra_js %}
+    <!-- Spazio per inclusioni specifiche di script nei template figli -->
+    {% endblock %}
+  </body>
+</html>

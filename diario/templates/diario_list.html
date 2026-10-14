@@ -1,0 +1,191 @@
+{% extends 'base.html' %}
+
+{% block title %}Diario{% endblock %}
+
+{% block extra_head %}
+<style>
+    .diario-card {
+        transition: transform 0.2s, box-shadow 0.2s;
+        height: 100%;
+        border: 0;
+        border-radius: 0.5rem;
+    }
+    
+    .diario-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+    }
+    
+    .card-title {
+        font-weight: 600;
+        border-bottom: 2px solid #f8f9fa;
+        padding-bottom: 0.5rem;
+        margin-bottom: 0.75rem;
+    }
+    
+    .card-content {
+        overflow: hidden;
+        display: -webkit-box;
+        -webkit-line-clamp: 3;
+        -webkit-box-orient: vertical;
+        margin-bottom: 1rem;
+        color: #6c757d;
+        min-height: 4.5rem;
+    }
+    
+    .date-badge {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        background-color: rgba(248, 249, 250, 0.9);
+        border-radius: 20px;
+        padding: 0.25rem 0.75rem;
+        font-size: 0.75rem;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    }
+    
+    .card-actions {
+        border-top: 1px solid #f8f9fa;
+        padding-top: 1rem;
+        margin-top: auto;
+    }
+    
+    .btn-view {
+        background-color: #007bff;
+        color: white;
+        border-radius: 20px;
+        padding: 0.25rem 1rem;
+        transition: background-color 0.2s;
+    }
+    
+    .btn-view:hover {
+        background-color: #0056b3;
+        color: white;
+    }
+    
+    .btn-action {
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        margin-left: 0.5rem;
+    }
+    
+    .empty-state {
+        text-align: center;
+        padding: 3rem;
+        background-color: #f8f9fa;
+        border-radius: 0.5rem;
+        margin-top: 2rem;
+    }
+    
+    /* Loader per caricamento asincrono */
+    .skeleton-card {
+        height: 250px;
+        background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+        background-size: 200% 100%;
+        animation: loading 1.5s infinite;
+        border-radius: 0.5rem;
+    }
+    
+    @keyframes loading {
+        0% { background-position: 200% 0; }
+        100% { background-position: -200% 0; }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h2 mb-0">Il mio diario</h1>
+        <a href="{% url 'diario:nuovo_diario' today.year today.month today.day %}" class="btn btn-success">
+            <i class="bi bi-plus-lg me-1"></i> Nuova nota
+        </a>
+    </div>
+    
+    <div class="row g-4">
+        {% if diari %}
+            {% for diario in diari %}
+            <div class="col-md-6 col-lg-4">
+                <div class="card diario-card shadow-sm">
+                    <div class="card-body d-flex flex-column p-4">
+                        <span class="date-badge">
+                            <i class="bi bi-calendar-event me-1"></i>{{ diario.data_creazione|date:"d M Y" }}
+                        </span>
+                        
+                        <h5 class="card-title">{{ diario.titolo }}</h5>
+                        
+                        <div class="card-content">
+                            {{ diario.contenuto|striptags|truncatechars:120 }}
+                        </div>
+                        
+                        <div class="card-actions d-flex justify-content-between align-items-center">
+                            <a href="{% url 'diario:dettaglio_diario' diario.pk %}" class="btn btn-view">
+                                <i class="bi bi-eye me-1"></i> Leggi
+                            </a>
+                            
+                            <div>
+                                <a href="{% url 'diario:aggiorna_diario' diario.pk %}" class="btn btn-warning btn-action" 
+                                   title="Modifica">
+                                    <i class="bi bi-pencil"></i>
+                                </a>
+                                <button class="btn btn-danger btn-action" title="Elimina"
+                                        data-bs-toggle="modal" data-bs-target="#deleteModal{{ diario.pk }}">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Modal di conferma eliminazione -->
+                <div class="modal fade" id="deleteModal{{ diario.pk }}" tabindex="-1" 
+                     aria-labelledby="deleteModalLabel{{ diario.pk }}" aria-hidden="true">
+                    <div class="modal-dialog modal-dialog-centered">
+                        <div class="modal-content">
+                            <div class="modal-header border-0">
+                                <h5 class="modal-title" id="deleteModalLabel{{ diario.pk }}">Conferma Eliminazione</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Chiudi"></button>
+                            </div>
+                            <div class="modal-body py-4">
+                                <div class="text-center mb-3">
+                                    <i class="bi bi-exclamation-triangle-fill text-warning" style="font-size: 3rem;"></i>
+                                </div>
+                                <p class="text-center">
+                                    Stai per eliminare la nota "<strong>{{ diario.titolo }}</strong>".<br>
+                                    Questa azione non può essere annullata.
+                                </p>
+                            </div>
+                            <div class="modal-footer border-0">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annulla</button>
+                                <form method="post" action="{% url 'diario:cancella_diario' diario.pk %}">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn btn-danger">
+                                        <i class="bi bi-trash me-1"></i> Elimina
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        {% else %}
+            <div class="col-12">
+                <div class="empty-state">
+                    <i class="bi bi-journal-text" style="font-size: 4rem; color: #ccc;"></i>
+                    <h3 class="mt-3">Nessuna nota nel diario</h3>
+                    <p class="text-muted">Inizia a creare la tua prima nota cliccando sul pulsante "Nuova nota"</p>
+                    <a href="{% url 'diario:nuovo_diario' today.year today.month today.day %}" class="btn btn-primary mt-3">
+                        <i class="bi bi-plus-lg me-1"></i> Crea la prima nota
+                    </a>
+                </div>
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+{% endblock %}

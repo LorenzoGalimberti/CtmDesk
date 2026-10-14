@@ -1,0 +1,24 @@
+{% extends 'base.html' %}
+
+{% block title %}Lista Eventi{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h1 class="display-4 text-primary">Lista Eventi</h1>
+    <hr class="my-4">
+    <div class="mb-3">
+        <a href="?archived=false" class="btn btn-primary">Eventi Attivi</a>
+        <a href="?archived=true" class="btn btn-secondary">Eventi Archiviati</a>
+    </div>
+    <ul class="list-group">
+        {% for evento in eventi %}
+            <li class="list-group-item">
+                <a href="{% url 'evento_dettaglio' evento.id %}">{{ evento.titolo }}</a>
+                {% if evento.archived %}
+                    <span class="badge bg-secondary">Archiviato</span>
+                {% endif %}
+            </li>
+        {% endfor %}
+    </ul>
+</div>
+{% endblock %}

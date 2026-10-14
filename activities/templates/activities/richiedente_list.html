@@ -1,0 +1,397 @@
+<!-- activities/templates/activities/richiedente_list.html -->
+{% extends "base.html" %}
+
+{% block title %}Gestione Richiedenti{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <!-- Header con titolo e pulsante creazione -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="display-5 text-primary">
+            <i class="bi bi-people"></i> Gestione Richiedenti
+        </h1>
+        <div>
+            <a href="{% url 'richiedente-create' %}" class="btn btn-success me-2">
+                <i class="bi bi-person-plus"></i> Nuovo Richiedente
+            </a>
+            <a href="{% url 'attivita-list' %}" class="btn btn-outline-primary">
+                <i class="bi bi-activity"></i> Attività
+            </a>
+        </div>
+    </div>
+
+    <!-- Filtri e ricerca -->
+    <div class="card mb-4 shadow-sm">
+        <div class="card-body">
+            <form method="get" class="row g-3 align-items-end">
+                <div class="col-md-3">
+                    <label for="cliente" class="form-label">Cliente</label>
+                    <select name="cliente" id="cliente" class="form-control">
+                        <option value="">Tutti i clienti</option>
+                        {% for cliente in clienti %}
+                            <option value="{{ cliente.id }}" {% if cliente_selected|add:0 == cliente.id %}selected{% endif %}>
+                                {{ cliente.nome }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label for="attivo" class="form-label">Stato</label>
+                    <select name="attivo" id="attivo" class="form-control">
+                        <option value="">Tutti</option>
+                        <option value="true" {% if attivo_selected == 'true' %}selected{% endif %}>Solo attivi</option>
+                        <option value="false" {% if attivo_selected == 'false' %}selected{% endif %}>Solo non attivi</option>
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <label for="search" class="form-label">Ricerca</label>
+                    <input type="text" name="search" id="search" class="form-control" 
+                           value="{{ search_query }}" placeholder="Cerca per nome, cognome o email...">
+                </div>
+                <div class="col-md-2">
+                    <button type="submit" class="btn btn-primary w-100">
+                        <i class="bi bi-search"></i> Cerca
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Statistiche rapide -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card bg-primary text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h6 class="card-title">Totale Richiedenti</h6>
+                            <h3 class="mb-0">{{ richiedenti|length }}</h3>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="bi bi-people fs-1"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-success text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h6 class="card-title">Attivi</h6>
+                            <h3 class="mb-0">{{ richiedenti_attivi }}</h3>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="bi bi-person-check fs-1"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-info text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h6 class="card-title">Con Attività</h6>
+                            <h3 class="mb-0">{{ richiedenti_con_attivita }}</h3>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="bi bi-activity fs-1"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-warning text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h6 class="card-title">Nuovi Oggi</h6>
+                            <h3 class="mb-0">{{ richiedenti_oggi }}</h3>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="bi bi-person-plus fs-1"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Lista dei richiedenti -->
+    {% if richiedenti %}
+    <div class="card shadow-sm">
+        <div class="card-header bg-light">
+            <h5 class="mb-0">Lista Richiedenti</h5>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead class="table-dark">
+                        <tr>
+                            <th>Richiedente</th>
+                            <th>Contatti</th>
+                            <th>Cliente</th>
+                            <th>Attività</th>
+                            <th>Stato</th>
+                            <th>Registrato</th>
+                            <th class="text-center">Azioni</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for richiedente in richiedenti %}
+                        <tr>
+                            <td>
+                                <div class="d-flex align-items-center">
+                                    <div class="avatar bg-primary text-white rounded-circle me-3 d-flex align-items-center justify-content-center" 
+                                         style="width: 40px; height: 40px; font-size: 16px;">
+                                        {{ richiedente.nome.0|default:'?' }}{{ richiedente.cognome.0|default:'?' }}
+                                    </div>
+                                    <div>
+                                        <a href="{% url 'richiedente-detail' richiedente.pk %}" 
+                                           class="text-decoration-none fw-bold">
+                                            {{ richiedente.nome_completo }}
+                                        </a>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>
+                                {% if richiedente.email %}
+                                    <div class="mb-1">
+                                        <i class="bi bi-envelope text-muted"></i>
+                                        <small>{{ richiedente.email }}</small>
+                                    </div>
+                                {% endif %}
+                                {% if richiedente.telefono %}
+                                    <div>
+                                        <i class="bi bi-telephone text-muted"></i>
+                                        <small>{{ richiedente.telefono }}</small>
+                                    </div>
+                                {% endif %}
+                                {% if not richiedente.email and not richiedente.telefono %}
+                                    <small class="text-muted">Nessun contatto</small>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <span class="badge" style="background-color: {{ richiedente.cliente.colore_sfondo|default:'#6c757d' }}; color: {{ richiedente.cliente.colore_testo|default:'#fff' }};">
+                                    {{ richiedente.cliente.nome }}
+                                </span>
+                            </td>
+                            <td>
+                                <div class="text-center">
+                                    {% if richiedente.attivita_totali_count > 0 %}
+                                        <a href="{% url 'attivita-list' %}?richiedente={{ richiedente.pk }}" 
+                                           class="btn btn-sm btn-outline-info">
+                                            {{ richiedente.attivita_totali_count }}
+                                            <i class="bi bi-activity"></i>
+                                        </a>
+                                        <br><small class="text-muted">
+                                            {{ richiedente.attivita_aperte_count }} aperte
+                                        </small>
+                                    {% else %}
+                                        <span class="text-muted">0</span>
+                                    {% endif %}
+                                </div>
+                            </td>
+                            <td>
+                                {% if richiedente.attivo %}
+                                    <span class="badge bg-success">
+                                        <i class="bi bi-check-circle"></i> Attivo
+                                    </span>
+                                {% else %}
+                                    <span class="badge bg-secondary">
+                                        <i class="bi bi-x-circle"></i> Non Attivo
+                                    </span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <small>{{ richiedente.created_at|date:"d/m/Y" }}</small>
+                                <br><small class="text-muted">{{ richiedente.created_at|timesince }} fa</small>
+                            </td>
+                            <td class="text-center">
+                                <div class="btn-group" role="group">
+                                    <a href="{% url 'richiedente-detail' richiedente.pk %}" 
+                                       class="btn btn-sm btn-outline-primary" title="Visualizza">
+                                        <i class="bi bi-eye"></i>
+                                    </a>
+                                    <a href="{% url 'richiedente-update' richiedente.pk %}" 
+                                       class="btn btn-sm btn-outline-warning" title="Modifica">
+                                        <i class="bi bi-pencil"></i>
+                                    </a>
+                                    <a href="{% url 'richiedente-delete' richiedente.pk %}" 
+                                       class="btn btn-sm btn-outline-danger" title="Elimina"
+                                       onclick="return confirm('Sei sicuro di voler eliminare questo richiedente?')">
+                                        <i class="bi bi-trash"></i>
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Paginazione -->
+    {% if is_paginated %}
+    <nav aria-label="Paginazione richiedenti" class="mt-4">
+        <ul class="pagination justify-content-center">
+            {% if page_obj.has_previous %}
+                <li class="page-item">
+                    <a class="page-link" href="?page=1{% if request.GET.cliente %}&cliente={{ request.GET.cliente }}{% endif %}{% if request.GET.attivo %}&attivo={{ request.GET.attivo }}{% endif %}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}">Prima</a>
+                </li>
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if request.GET.cliente %}&cliente={{ request.GET.cliente }}{% endif %}{% if request.GET.attivo %}&attivo={{ request.GET.attivo }}{% endif %}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}">Precedente</a>
+                </li>
+            {% endif %}
+            
+            <li class="page-item active">
+                <span class="page-link">{{ page_obj.number }} di {{ page_obj.paginator.num_pages }}</span>
+            </li>
+            
+            {% if page_obj.has_next %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if request.GET.cliente %}&cliente={{ request.GET.cliente }}{% endif %}{% if request.GET.attivo %}&attivo={{ request.GET.attivo }}{% endif %}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}">Successiva</a>
+                </li>
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}{% if request.GET.cliente %}&cliente={{ request.GET.cliente }}{% endif %}{% if request.GET.attivo %}&attivo={{ request.GET.attivo }}{% endif %}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}">Ultima</a>
+                </li>
+            {% endif %}
+        </ul>
+    </nav>
+    {% endif %}
+
+    {% else %}
+    <!-- Messaggio quando non ci sono richiedenti -->
+    <div class="text-center py-5">
+        <div class="mb-4">
+            <i class="bi bi-people display-1 text-muted"></i>
+        </div>
+        <h3 class="text-muted mb-3">Nessun richiedente trovato</h3>
+        <p class="text-muted mb-4">
+            {% if search_query or cliente_selected or attivo_selected %}
+                Non sono stati trovati richiedenti che corrispondono ai criteri di ricerca.
+            {% else %}
+                Non ci sono ancora richiedenti nel sistema.
+            {% endif %}
+        </p>
+        <a href="{% url 'richiedente-create' %}" class="btn btn-primary">
+            <i class="bi bi-person-plus"></i> Aggiungi il primo richiedente
+        </a>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Toast per messaggi -->
+{% if messages %}
+<div class="position-fixed bottom-0 end-0 p-3" style="z-index: 1050">
+    {% for message in messages %}
+    <div class="toast align-items-center text-white bg-{{ message.tags }} border-0" role="alert" aria-live="assertive" aria-atomic="true">
+        <div class="d-flex">
+            <div class="toast-body">
+                {{ message }}
+            </div>
+            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% endif %}
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Inizializza i toast
+    var toastElList = [].slice.call(document.querySelectorAll('.toast'));
+    var toastList = toastElList.map(function (toastEl) {
+        var toast = new bootstrap.Toast(toastEl);
+        toast.show();
+        return toast;
+    });
+
+    // Conferma eliminazione
+    document.querySelectorAll('a[href*="delete"]').forEach(function(link) {
+        link.addEventListener('click', function(e) {
+            if (!confirm('Sei sicuro di voler eliminare questo richiedente? Questa azione non può essere annullata.')) {
+                e.preventDefault();
+            }
+        });
+    });
+
+    // Evidenzia righe al hover
+    document.querySelectorAll('tbody tr').forEach(function(row) {
+        row.addEventListener('mouseenter', function() {
+            this.style.backgroundColor = 'rgba(0,0,0,0.02)';
+        });
+        row.addEventListener('mouseleave', function() {
+            this.style.backgroundColor = '';
+        });
+    });
+});
+</script>
+
+<style>
+/* Stili personalizzati per la lista richiedenti */
+.avatar {
+    font-weight: bold;
+}
+
+.table-hover tbody tr:hover {
+    background-color: rgba(0,0,0,0.02);
+}
+
+.card {
+    transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+}
+
+.card:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+.btn:hover {
+    transform: translateY(-1px);
+}
+
+/* Badge personalizzati */
+.badge {
+    font-weight: normal;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .display-5 {
+        font-size: 2rem;
+    }
+    
+    .btn-group {
+        flex-direction: column;
+    }
+    
+    .btn-group .btn {
+        margin-bottom: 2px;
+    }
+    
+    .avatar {
+        width: 32px !important;
+        height: 32px !important;
+        font-size: 12px !important;
+    }
+}
+
+/* Animazioni */
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.card {
+    animation: fadeIn 0.3s ease-out;
+}
+</style>
+{% endblock %}

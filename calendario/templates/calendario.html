@@ -1,0 +1,349 @@
+{% extends 'base.html' %}
+
+{% block title %}Calendario Eventi{% endblock %}
+
+{% block content %}
+<div class="container my-5">
+    <!-- Titolo principale -->
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <h1 class="text-primary">Calendario degli Eventi</h1>
+        </div>
+        <div class="col-md-4 text-md-end mt-3 mt-md-0">
+            <a href="{% url 'lista_eventi' %}?archived=false" class="btn btn-outline-primary me-2">
+                <i class="bi bi-list-ul"></i> Eventi Attivi
+            </a>
+            <a href="{% url 'lista_eventi' %}?archived=true" class="btn btn-outline-secondary">
+                <i class="bi bi-archive"></i> Archivio
+            </a>
+        </div>
+    </div>
+
+    <!-- Barra di controllo sopra il calendario -->
+    <div class="card shadow-sm mb-4">
+        <div class="card-body py-3">
+            <div class="row">
+                <div class="col-md-6 mb-2 mb-md-0">
+                    <!-- Campo di ricerca migliorato -->
+                    <div class="input-group">
+                        <span class="input-group-text bg-white">
+                            <i class="bi bi-search"></i>
+                        </span>
+                        <input type="text" id="searchInput" class="form-control border-start-0" placeholder="Cerca evento..." />
+                        <button id="searchBtn" class="btn btn-primary">Cerca</button>
+                    </div>
+                </div>
+                <div class="col-md-6 d-flex justify-content-md-end align-items-center">
+                    <!-- Pulsante "Aggiungi Evento" -->
+                    <button class="btn btn-primary" type="button" data-bs-toggle="modal" data-bs-target="#modalFormEvento">
+                        <i class="bi bi-plus-lg"></i> Aggiungi Evento
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Contenitore per il calendario -->
+    <div class="card shadow">
+        <div class="card-body p-0 p-md-3">
+            <!-- Calendario -->
+            <div id="calendar"></div>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL per l'aggiunta di un nuovo evento -->
+<div class="modal fade" id="modalFormEvento" tabindex="-1" aria-labelledby="modalFormEventoLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <form id="eventoForm" method="post">
+      <div class="modal-content">
+        <div class="modal-header bg-primary text-white">
+          <h5 class="modal-title" id="modalFormEventoLabel">Aggiungi Evento</h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Chiudi"></button>
+        </div>
+        <div class="modal-body">
+          {% csrf_token %}
+          <div class="mb-3">
+            <label for="{{ form.titolo.id_for_label }}" class="form-label">{{ form.titolo.label }}</label>
+            {{ form.titolo }}
+          </div>
+          <div class="mb-3">
+            <label for="{{ form.cliente.id_for_label }}" class="form-label">{{ form.cliente.label }}</label>
+            {{ form.cliente }}
+          </div>
+          <div class="row">
+            <div class="col-md-6 mb-3">
+              <label for="{{ form.data_inizio.id_for_label }}" class="form-label">{{ form.data_inizio.label }}</label>
+              {{ form.data_inizio }}
+            </div>
+            <div class="col-md-6 mb-3">
+              <label for="{{ form.data_fine.id_for_label }}" class="form-label">{{ form.data_fine.label }}</label>
+              {{ form.data_fine }}
+            </div>
+          </div>
+          <div class="mb-3">
+            <label for="{{ form.descrizione.id_for_label }}" class="form-label">{{ form.descrizione.label }}</label>
+            {{ form.descrizione }}
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annulla</button>
+          <button type="submit" class="btn btn-primary">
+            <i class="bi bi-save me-1"></i> Salva
+          </button>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Toast per notifiche -->
+<div class="position-fixed bottom-0 end-0 p-3" style="z-index: 11">
+  <div id="notificationToast" class="toast align-items-center text-white bg-success border-0" role="alert" aria-live="assertive" aria-atomic="true">
+    <div class="d-flex">
+      <div class="toast-body">
+        <i class="bi bi-check-circle me-2"></i> <span id="toastMessage">Evento aggiunto con successo!</span>
+      </div>
+      <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_head %}
+    <!-- FullCalendar CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.7/index.global.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
+    <style>
+      .fc-toolbar-title {
+        font-size: 1.5rem !important;
+        text-transform: capitalize;
+      }
+      
+      .fc-daygrid-event {
+        cursor: pointer;
+        border-radius: 4px;
+        padding: 2px 4px;
+        transition: all 0.2s ease;
+      }
+      
+      .fc-daygrid-event:hover {
+        transform: scale(1.02);
+        box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+      }
+      
+      .fc-day-today {
+        background-color: rgba(13, 110, 253, 0.05) !important;
+      }
+      
+      @keyframes slideInRight {
+        from { transform: translateX(100%); }
+        to { transform: translateX(0); }
+      }
+      
+      .toast.show {
+        animation: slideInRight 0.3s ease forwards;
+      }
+    </style>
+{% endblock %}
+
+{% block extra_js %}
+    <!-- jQuery -->
+    <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
+    <!-- FullCalendar JS -->
+    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.7/index.global.min.js"></script>
+
+    <script>
+      document.addEventListener('DOMContentLoaded', function() {
+          var calendarEl = document.getElementById('calendar');
+          var toastEl = document.getElementById('notificationToast');
+
+          function showNotification(message, type = 'success') {
+              var toastEl = document.getElementById('notificationToast');
+              toastEl.classList.remove('bg-success', 'bg-danger', 'bg-warning');
+              
+              switch(type) {
+                  case 'error':
+                      toastEl.classList.add('bg-danger');
+                      break;
+                  case 'warning':
+                      toastEl.classList.add('bg-warning');
+                      break;
+                  default:
+                      toastEl.classList.add('bg-success');
+              }
+              
+              document.getElementById('toastMessage').textContent = message;
+              var toast = new bootstrap.Toast(toastEl);
+              toast.show();
+          }
+
+          var calendar = new FullCalendar.Calendar(calendarEl, {
+              initialView: 'dayGridMonth',
+              locale: 'it',
+              themeSystem: 'bootstrap5',
+              headerToolbar: {
+                  left: 'prev,next today',
+                  center: 'title',
+                  right: 'dayGridMonth,timeGridWeek,timeGridDay,listWeek'
+              },
+              buttonText: {
+                  today: 'Oggi',
+                  month: 'Mese',
+                  week: 'Settimana',
+                  day: 'Giorno',
+                  list: 'Lista'
+              },
+              height: 'auto',
+              dayMaxEvents: true,
+              firstDay: 1,
+
+              eventDidMount: function(info) {
+                  var tooltip = new bootstrap.Tooltip(info.el, {
+                      title: info.event.extendedProps.description || info.event.title,
+                      placement: 'top',
+                      trigger: 'hover',
+                      container: 'body'
+                  });
+              },
+
+              events: function(info, successCallback, failureCallback) {
+                  $.ajax({
+                      url: '{% url "eventi_json" %}',
+                      data: {
+                          start: info.startStr,
+                          end: info.endStr
+                      },
+                      success: function(data) {
+                          successCallback(data);
+                      },
+                      error: failureCallback
+                  });
+              },
+
+              eventClick: function(info) {
+                  var eventId = info.event.id;
+                  // Apri direttamente il dettaglio dell'evento
+                  window.location.href = '{% url "evento_dettaglio" 0 %}'.replace('0', eventId);
+              },
+              
+              dateClick: function(info) {
+                  var data = info.dateStr;
+                  $('#id_data_inizio').val(data + 'T09:00');
+                  $('#id_data_fine').val(data + 'T10:00');
+                  
+                  var modal = new bootstrap.Modal(document.getElementById('modalFormEvento'));
+                  modal.show();
+              }
+          });
+
+          calendar.render();
+
+          $('#eventoForm').submit(function(e) {
+              e.preventDefault();
+              
+              var titolo = $('#id_titolo').val();
+              var dataInizio = $('#id_data_inizio').val();
+              var dataFine = $('#id_data_fine').val();
+              
+              if (!titolo || !dataInizio || !dataFine) {
+                  showNotification('Compila tutti i campi obbligatori', 'error');
+                  return;
+              }
+              
+              var submitBtn = $(this).find('button[type="submit"]');
+              var originalText = submitBtn.html();
+              submitBtn.html('<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Salvataggio...');
+              submitBtn.attr('disabled', true);
+
+              $.ajax({
+                  url: '{% url "aggiungi_evento" %}',
+                  type: 'POST',
+                  data: $(this).serialize(),
+                  success: function(response) {
+                      calendar.addEvent({
+                          id: response.id,
+                          title: response.title,
+                          start: response.start,
+                          end: response.end,
+                          backgroundColor: response.backgroundColor,
+                          textColor: response.textColor,
+                          extendedProps: {
+                              description: response.description
+                          }
+                      });
+
+                      // Messaggio di successo con info sul task
+                      if (response.task_created) {
+                          showNotification(`Evento e task creati con successo! Task ID: ${response.task_id}`);
+                      } else {
+                          showNotification("Evento creato con successo!");
+                          if (response.task_error) {
+                              console.warn("Errore nella creazione del task:", response.task_error);
+                          }
+                      }
+
+                      $('#eventoForm')[0].reset();
+                      var modalEl = document.getElementById('modalFormEvento');
+                      var modal = bootstrap.Modal.getInstance(modalEl);
+                      modal.hide();
+                  },
+                  error: function() {
+                      showNotification("Errore nell'aggiungere l'evento", 'error');
+                  },
+                  complete: function() {
+                      submitBtn.html(originalText);
+                      submitBtn.attr('disabled', false);
+                  }
+              });
+          });
+
+          $('#searchBtn').click(function() {
+              var query = $('#searchInput').val().toLowerCase();
+              if (query === '') {
+                  calendar.getEvents().forEach(function(ev) {
+                      ev.setProp('display', 'auto');
+                  });
+                  return;
+              }
+              
+              var allEvents = calendar.getEvents();
+              var found = false;
+              
+              allEvents.forEach(function(ev) {
+                  var isMatch = ev.title.toLowerCase().includes(query);
+                  ev.setProp('display', isMatch ? 'auto' : 'none');
+                  if (isMatch) found = true;
+              });
+              
+              if (!found) {
+                  showNotification('Nessun evento trovato', 'warning');
+              }
+          });
+          
+          $('#searchInput').keypress(function(e) {
+              if(e.which == 13) {
+                  $('#searchBtn').click();
+                  return false;
+              }
+          });
+      });
+      
+      // Funzione per ottenere il CSRF token
+      function getCookie(name) {
+          let cookieValue = null;
+          if (document.cookie && document.cookie !== '') {
+              const cookies = document.cookie.split(';');
+              for (let i = 0; i < cookies.length; i++) {
+                  const cookie = cookies[i].trim();
+                  if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                      cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                      break;
+                  }
+              }
+          }
+          return cookieValue;
+      }
+    </script>
+{% endblock %}

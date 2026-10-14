@@ -1,0 +1,310 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ nota.titolo }}{% endblock %}
+
+{% block extra_head %}
+<style>
+    .nota-header {
+        position: relative;
+        padding-bottom: 1.5rem;
+        margin-bottom: 2rem;
+    }
+    
+    .nota-header::after {
+        content: '';
+        position: absolute;
+        bottom: 0;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 100px;
+        height: 3px;
+        background: linear-gradient(to right, #007bff, #6610f2);
+        border-radius: 3px;
+    }
+    
+    .nota-meta {
+        display: inline-block;
+        padding: 0.35rem 0.75rem;
+        background-color: #f8f9fa;
+        border-radius: 20px;
+        font-size: 0.9rem;
+        margin-bottom: 1.5rem;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+    }
+    
+    .nota-content {
+        font-size: 1.1rem;
+        line-height: 1.7;
+        color: #343a40;
+        background-color: #fff;
+        padding: 2rem;
+        border-radius: 0.5rem;
+        box-shadow: 0 0 20px rgba(0,0,0,0.03);
+        margin-bottom: 2rem;
+    }
+    
+    .nota-content p:last-child {
+        margin-bottom: 0;
+    }
+    
+    .cliente-badge {
+        display: inline-block;
+        padding: 0.4rem 0.8rem;
+        margin: 0.2rem;
+        border-radius: 30px;
+        font-size: 0.85rem;
+        font-weight: 500;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        transition: transform 0.2s;
+    }
+    
+    .cliente-badge:hover {
+        transform: translateY(-2px);
+    }
+    
+    .action-btn {
+        border-radius: 30px;
+        padding: 0.5rem 1rem;
+        font-weight: 500;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        transition: all 0.2s;
+    }
+    
+    .action-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    }
+    
+    .return-btn {
+        background-color: #f8f9fa;
+        color: #495057;
+    }
+    
+    .return-btn:hover {
+        background-color: #e9ecef;
+        color: #212529;
+    }
+    
+    .add-btn {
+        background-color: #d1e7dd;
+        color: #0f5132;
+    }
+    
+    .add-btn:hover {
+        background-color: #badbcc;
+        color: #0a3622;
+    }
+    
+    .edit-btn {
+        background-color: #fff3cd;
+        color: #664d03;
+    }
+    
+    .edit-btn:hover {
+        background-color: #ffecb5;
+        color: #523e02;
+    }
+    
+    .download-btn {
+        background-color: #cff4fc;
+        color: #055160;
+    }
+    
+    .download-btn:hover {
+        background-color: #b6effb;
+        color: #042a2e;
+    }
+    
+    .delete-btn {
+        background-color: #f8d7da;
+        color: #842029;
+    }
+    
+    .delete-btn:hover {
+        background-color: #f5c2c7;
+        color: #671722;
+    }
+    
+    .modal-confirm {
+        color: #636363;
+    }
+    
+    .modal-confirm .modal-content {
+        padding: 20px;
+        border-radius: 12px;
+        border: none;
+    }
+    
+    .modal-confirm .modal-header {
+        border-bottom: none;
+        position: relative;
+        justify-content: center;
+        padding-top: 1.5rem;
+    }
+    
+    .modal-confirm .modal-title {
+        text-align: center;
+        font-size: 1.5rem;
+        margin: 0 0 1rem;
+    }
+    
+    .modal-confirm .modal-body {
+        text-align: center;
+        padding: 0 2rem 1.5rem;
+    }
+    
+    .modal-confirm .icon-box {
+        width: 80px;
+        height: 80px;
+        margin: 0 auto 20px;
+        border-radius: 50%;
+        z-index: 9;
+        text-align: center;
+        border: 3px solid #f15e5e;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    .modal-confirm .icon-box i {
+        color: #f15e5e;
+        font-size: 2.5rem;
+    }
+    
+    .modal-confirm .btn-action {
+        min-width: 120px;
+        border-radius: 30px;
+        font-weight: 500;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-9 col-md-11">
+            <!-- Card nota -->
+            <div class="card border-0 shadow-lg rounded-4 overflow-hidden">
+                <div class="card-body p-md-5 p-4">
+                    <!-- Intestazione nota -->
+                    <div class="nota-header text-center">
+                        <h1 class="display-5 fw-bold text-primary mb-3">{{ nota.titolo }}</h1>
+                        <div class="nota-meta">
+                            <i class="bi bi-calendar-event me-2"></i>
+                            {{ nota.data_creazione|date:"d M Y, H:i" }}
+                        </div>
+                    </div>
+
+                    <!-- Contenuto nota -->
+                    <div class="nota-content">
+                        {{ nota.contenuto|safe }}
+                    </div>
+
+                    <!-- Clienti associati -->
+                    <div class="clienti mb-4">
+                        <h5 class="fw-bold text-secondary mb-3">
+                            <i class="bi bi-people me-2"></i>Clienti
+                        </h5>
+                        
+                        {% if nota.clienti.exists %}
+                            <div class="d-flex flex-wrap">
+                                {% for cliente in nota.clienti.all %}
+                                    <span class="cliente-badge" style="background-color: {{ cliente.colore_sfondo }}; color: {{ cliente.colore_testo }};">
+                                        {{ cliente.nome }}
+                                    </span>
+                                {% endfor %}
+                            </div>
+                        {% else %}
+                            <p class="text-muted fst-italic">
+                                <i class="bi bi-info-circle me-2"></i>
+                                Nessun cliente associato a questa nota.
+                            </p>
+                        {% endif %}
+                    </div>
+
+                    <!-- Pulsanti azioni -->
+                    <div class="d-flex flex-wrap justify-content-between gap-2 mt-4 pt-2">
+                        <a href="{% url 'diario:diario_del_giorno' nota.data_creazione.year nota.data_creazione.month nota.data_creazione.day %}" 
+                           class="btn action-btn return-btn">
+                            <i class="bi bi-arrow-left-circle me-2"></i>
+                            Torna al diario
+                        </a>
+                        
+                        <div class="d-flex flex-wrap gap-2 justify-content-end">
+                            <a href="{% url 'diario:nuovo_diario' nota.data_creazione.year nota.data_creazione.month nota.data_creazione.day %}" 
+                               class="btn action-btn add-btn">
+                                <i class="bi bi-plus-circle me-2"></i>
+                                Nuova nota
+                            </a>
+                            
+                            <!-- Nuovo pulsante per il download -->
+                            <a href="{% url 'diario:scarica_nota_pdf' nota.pk %}" 
+                               class="btn action-btn download-btn"
+                               title="Scarica nota come PDF">
+                                <i class="bi bi-download me-2"></i>
+                                Scarica PDF
+                            </a>
+                            
+                            <a href="{% url 'diario:aggiorna_diario' nota.pk %}" 
+                               class="btn action-btn edit-btn">
+                                <i class="bi bi-pencil-square me-2"></i>
+                                Modifica
+                            </a>
+                            
+                            <button class="btn action-btn delete-btn"
+                                    data-bs-toggle="modal" 
+                                    data-bs-target="#confirmDeleteModal"
+                                    data-note-id="{{ nota.pk }}">
+                                <i class="bi bi-trash me-2"></i>
+                                Elimina
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal conferma eliminazione -->
+<div class="modal fade modal-confirm" id="confirmDeleteModal" tabindex="-1" aria-labelledby="confirmDeleteModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="confirmDeleteModalLabel">Conferma eliminazione</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            
+            <div class="modal-body">
+                <div class="icon-box">
+                    <i class="bi bi-exclamation-triangle"></i>
+                </div>
+                <h4 class="mb-3 text-danger">Sei sicuro?</h4>
+                <p>Stai per eliminare definitivamente la nota "<strong>{{ nota.titolo }}</strong>".<br>
+                Questa azione non può essere annullata.</p>
+            </div>
+            
+            <div class="modal-footer border-0 justify-content-center">
+                <button type="button" class="btn btn-secondary btn-action" data-bs-dismiss="modal">Annulla</button>
+                <a id="deleteNoteBtn" href="#" class="btn btn-danger btn-action">
+                    <i class="bi bi-trash me-1"></i> Elimina
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        // Configurazione modal eliminazione
+        var deleteNoteBtn = document.getElementById('deleteNoteBtn');
+        var modal = document.getElementById('confirmDeleteModal');
+
+        modal.addEventListener('show.bs.modal', function (event) {
+            var button = event.relatedTarget;
+            var noteId = button.getAttribute('data-note-id');
+            deleteNoteBtn.setAttribute('href', "{% url 'diario:cancella_diario' '0' %}".replace('0', noteId));
+        });
+    });
+</script>
+{% endblock %}

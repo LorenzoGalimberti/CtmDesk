@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+
+{% block title %}Anteprima: {{ allegato.nome_originale }}{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <!-- Breadcrumb -->
+    <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{% url 'activities-dashboard' %}">Dashboard</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'attivita-list' %}">Attività</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'attivita-detail' attivita.pk %}">{{ attivita.nome_flusso|truncatewords:3 }}</a></li>
+            <li class="breadcrumb-item active">Anteprima File</li>
+        </ol>
+    </nav>
+
+    <!-- Header del file -->
+    <div class="card shadow-sm mb-4">
+        <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+            <div>
+                <h5 class="mb-0">
+                    <i class="{{ allegato.icona_file }}"></i> {{ allegato.nome_originale }}
+                </h5>
+                <small>
+                    {{ allegato.dimensione_formattata }} • {{ allegato.caricato_il|date:"d/m/Y H:i" }}
+                </small>
+            </div>
+            <div class="btn-group">
+                <a href="{% url 'scarica-allegato' allegato.id %}" class="btn btn-light btn-sm">
+                    <i class="bi bi-download"></i> Scarica
+                </a>
+                <a href="{% url 'attivita-detail' attivita.pk %}" class="btn btn-outline-light btn-sm">
+                    <i class="bi bi-arrow-left"></i> Torna
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Contenuto del file -->
+    <div class="card shadow-sm">
+        <div class="card-body">
+            <div class="row">
+                <div class="col-12">
+                    <div class="bg-light p-3 rounded" style="max-height: 600px; overflow-y: auto;">
+                        <pre style="white-space: pre-wrap; word-wrap: break-word; margin: 0; font-family: 'Courier New', monospace; font-size: 14px;">{{ contenuto }}</pre>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="card-footer bg-transparent">
+            <div class="d-flex justify-content-between align-items-center">
+                <small class="text-muted">
+                    <i class="bi bi-info-circle"></i> 
+                    Anteprima file di testo • Encoding: UTF-8
+                </small>
+                <div class="btn-group btn-group-sm">
+                    <a href="{% url 'scarica-allegato' allegato.id %}" class="btn btn-outline-primary">
+                        <i class="bi bi-download"></i> Scarica Originale
+                    </a>
+                    <a href="{% url 'attivita-detail' attivita.pk %}" class="btn btn-outline-secondary">
+                        <i class="bi bi-arrow-left"></i> Torna all'Attività
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

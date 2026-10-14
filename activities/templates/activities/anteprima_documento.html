@@ -1,0 +1,124 @@
+{% extends "base.html" %}
+
+{% block title %}Anteprima: {{ allegato.nome_originale }}{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <!-- Breadcrumb -->
+    <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{% url 'activities-dashboard' %}">Dashboard</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'attivita-list' %}">Attività</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'attivita-detail' attivita.pk %}">{{ attivita.nome_flusso|truncatewords:3 }}</a></li>
+            <li class="breadcrumb-item active">Anteprima File</li>
+        </ol>
+    </nav>
+
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <!-- Header del file -->
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                    <div>
+                        <h5 class="mb-0">
+                            <i class="{{ allegato.icona_file }}"></i> {{ allegato.nome_originale }}
+                        </h5>
+                        <small>
+                            {{ allegato.dimensione_formattata }} • {{ allegato.caricato_il|date:"d/m/Y H:i" }}
+                        </small>
+                    </div>
+                    <div class="btn-group">
+                        <a href="{% url 'scarica-allegato' allegato.id %}" class="btn btn-light btn-sm">
+                            <i class="bi bi-download"></i> Scarica
+                        </a>
+                        <a href="{% url 'attivita-detail' attivita.pk %}" class="btn btn-outline-light btn-sm">
+                            <i class="bi bi-arrow-left"></i> Torna
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Contenuto dell'anteprima -->
+            <div class="card shadow-sm">
+                <div class="card-body text-center py-5">
+                    <div class="mb-4">
+                        <i class="{{ allegato.icona_file }} display-1 text-primary"></i>
+                    </div>
+                    
+                    {% if tipo_documento == 'office' %}
+                        <h4 class="mb-3">Documento Office</h4>
+                        <p class="text-muted mb-4">
+                            Questo è un documento Microsoft Office. Per visualizzarlo, puoi:
+                        </p>
+                        
+                        <div class="row g-3 justify-content-center">
+                            <div class="col-md-6">
+                                <div class="card border-primary h-100">
+                                    <div class="card-body">
+                                        <h6 class="card-title">
+                                            <i class="bi bi-download text-primary"></i> Scarica e Apri
+                                        </h6>
+                                        <p class="card-text small">Scarica il file e aprilo con l'applicazione appropriata sul tuo computer.</p>
+                                        <a href="{% url 'scarica-allegato' allegato.id %}" class="btn btn-primary btn-sm">
+                                            <i class="bi bi-download"></i> Scarica File
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="card border-info h-100">
+                                    <div class="card-body">
+                                        <h6 class="card-title">
+                                            <i class="bi bi-globe text-info"></i> Apri Online
+                                        </h6>
+                                        <p class="card-text small">Apri il documento direttamente nel browser (potrebbe non funzionare per tutti i file).</p>
+                                        <a href="{% url 'scarica-allegato' allegato.id %}" target="_blank" class="btn btn-info btn-sm">
+                                            <i class="bi bi-box-arrow-up-right"></i> Apri Online
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    {% else %}
+                        <h4 class="mb-3">File non visualizzabile</h4>
+                        <p class="text-muted mb-4">
+                            Questo tipo di file non può essere visualizzato direttamente nel browser.
+                        </p>
+                        
+                        <div class="alert alert-info">
+                            <i class="bi bi-info-circle"></i>
+                            <strong>Suggerimento:</strong> Scarica il file per aprirlo con l'applicazione appropriata.
+                        </div>
+                        
+                        <a href="{% url 'scarica-allegato' allegato.id %}" class="btn btn-primary">
+                            <i class="bi bi-download"></i> Scarica File
+                        </a>
+                    {% endif %}
+                </div>
+                
+                <!-- Informazioni del file -->
+                <div class="card-footer bg-light">
+                    <div class="row text-center">
+                        <div class="col-md-3">
+                            <strong>Tipo:</strong><br>
+                            <small class="text-muted">{{ allegato.tipo_mime }}</small>
+                        </div>
+                        <div class="col-md-3">
+                            <strong>Dimensione:</strong><br>
+                            <small class="text-muted">{{ allegato.dimensione_formattata }}</small>
+                        </div>
+                        <div class="col-md-3">
+                            <strong>Caricato:</strong><br>
+                            <small class="text-muted">{{ allegato.caricato_il|date:"d/m/Y H:i" }}</small>
+                        </div>
+                        <div class="col-md-3">
+                            <strong>Attività:</strong><br>
+                            <small class="text-muted">{{ attivita.nome_flusso|truncatechars:20 }}</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,349 @@
+<!-- activities/templates/activities/attivita_confirm_delete.html -->
+{% extends "base.html" %}
+
+{% block title %}Elimina Attività - {{ attivita.nome_flusso }}{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <!-- Breadcrumb -->
+    <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{% url 'activities-dashboard' %}">Dashboard</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'attivita-list' %}">Attività</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'attivita-detail' attivita.pk %}">{{ attivita.nome_flusso|truncatewords:2 }}</a></li>
+            <li class="breadcrumb-item active">Elimina</li>
+        </ol>
+    </nav>
+
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <!-- Card di avviso -->
+            <div class="card shadow border-danger">
+                <div class="card-header bg-danger text-white">
+                    <h4 class="mb-0">
+                        <i class="bi bi-exclamation-triangle"></i> Conferma Eliminazione
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-8">
+                            <h5 class="text-danger mb-3">
+                                Sei sicuro di voler eliminare questa attività?
+                            </h5>
+                            
+                            <div class="alert alert-warning" role="alert">
+                                <i class="bi bi-exclamation-triangle-fill"></i>
+                                <strong>Attenzione:</strong> Questa azione non può essere annullata.
+                            </div>
+
+                            <div class="mb-4">
+                                <h6>Attività da eliminare:</h6>
+                                <div class="card bg-light">
+                                    <div class="card-body">
+                                        <div class="d-flex align-items-start">
+                                            <div class="me-3">
+                                                <span class="badge fs-6" style="background-color: {{ attivita.categoria.colore }}; color: white;">
+                                                    <i class="{{ attivita.categoria.icona }}"></i>
+                                                </span>
+                                            </div>
+                                            <div class="flex-grow-1">
+                                                <h6 class="mb-2">{{ attivita.nome_flusso }}</h6>
+                                                <div class="row">
+                                                    <div class="col-md-6">
+                                                        <small class="text-muted d-block">
+                                                            <i class="bi bi-person"></i> <strong>Richiedente:</strong><br>
+                                                            {{ attivita.richiedente.nome_completo }}
+                                                        </small>
+                                                        <small class="text-muted d-block mt-2">
+                                                            <i class="bi bi-building"></i> <strong>Cliente:</strong><br>
+                                                            {{ attivita.cliente.nome }}
+                                                        </small>
+                                                    </div>
+                                                    <div class="col-md-6">
+                                                        <small class="text-muted d-block">
+                                                            <i class="bi bi-tag"></i> <strong>Categoria:</strong><br>
+                                                            {{ attivita.categoria.nome }}
+                                                        </small>
+                                                        <small class="text-muted d-block mt-2">
+                                                            <i class="bi bi-calendar"></i> <strong>Creata:</strong><br>
+                                                            {{ attivita.data_creazione|date:"d/m/Y H:i" }}
+                                                        </small>
+                                                    </div>
+                                                </div>
+                                                {% if attivita.descrizione %}
+                                                <div class="mt-2">
+                                                    <small class="text-muted">
+                                                        <i class="bi bi-text-paragraph"></i> <strong>Descrizione:</strong><br>
+                                                        {{ attivita.descrizione|truncatewords:20 }}
+                                                    </small>
+                                                </div>
+                                                {% endif %}
+                                            </div>
+                                            <div class="ms-3">
+                                                {% if attivita.is_aperta %}
+                                                    <span class="badge bg-success">
+                                                        <i class="bi bi-check-circle"></i> Aperta
+                                                    </span>
+                                                {% else %}
+                                                    <span class="badge bg-secondary">
+                                                        <i class="bi bi-x-circle"></i> Chiusa
+                                                    </span>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Form di conferma -->
+                            <form method="post" class="mt-4">
+                                {% csrf_token %}
+                                <div class="d-flex gap-3 justify-content-end">
+                                    <a href="{% url 'attivita-detail' attivita.pk %}" class="btn btn-outline-secondary btn-lg">
+                                        <i class="bi bi-arrow-left"></i> Annulla
+                                    </a>
+                                    <a href="{% url 'attivita-list' %}" class="btn btn-outline-primary btn-lg">
+                                        <i class="bi bi-list-ul"></i> Lista Attività
+                                    </a>
+                                    <button type="submit" class="btn btn-danger btn-lg" onclick="return confirmDelete()">
+                                        <i class="bi bi-trash"></i> Sì, Elimina Definitivamente
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+
+                        <!-- Sidebar con dettagli -->
+                        <div class="col-md-4">
+                            <div class="card bg-light">
+                                <div class="card-header">
+                                    <h6 class="mb-0">
+                                        <i class="bi bi-info-circle"></i> Dettagli Eliminazione
+                                    </h6>
+                                </div>
+                                <div class="card-body">
+                                    <small class="text-muted">
+                                        <strong>Cosa succederà:</strong>
+                                    </small>
+                                    <ul class="small mt-2 mb-3">
+                                        <li>L'attività verrà rimossa dal sistema</li>
+                                        <li>Tutti i dati associati verranno eliminati</li>
+                                        <li>I dati non potranno essere recuperati</li>
+                                        <li>L'azione verrà registrata nei log di sistema</li>
+                                    </ul>
+
+                                    <small class="text-muted">
+                                        <strong>Alternative consigliate:</strong>
+                                    </small>
+                                    <ul class="small mt-2">
+                                        <li>
+                                            {% if attivita.is_aperta %}
+                                                <a href="{% url 'attivita-chiudi' attivita.pk %}" class="text-decoration-none">
+                                                    Chiudi l'attività
+                                                </a> invece di eliminarla
+                                            {% else %}
+                                                <a href="{% url 'attivita-riapri' attivita.pk %}" class="text-decoration-none">
+                                                    Riapri l'attività
+                                                </a> se necessario
+                                            {% endif %}
+                                        </li>
+                                        <li>
+                                            <a href="{% url 'attivita-update' attivita.pk %}" class="text-decoration-none">
+                                                Modifica l'attività
+                                            </a> per correggere informazioni
+                                        </li>
+                                    </ul>
+                                </div>
+                            </div>
+
+                            <!-- Card informazioni richiedente -->
+                            <div class="card mt-3">
+                                <div class="card-header bg-primary text-white">
+                                    <h6 class="mb-0">
+                                        <i class="bi bi-person"></i> Informazioni Richiedente
+                                    </h6>
+                                </div>
+                                <div class="card-body text-center">
+                                    <div class="avatar bg-primary text-white rounded-circle d-inline-flex align-items-center justify-content-center mb-2" 
+                                         style="width: 50px; height: 50px; font-size: 18px;">
+                                        {{ attivita.richiedente.nome.0 }}{{ attivita.richiedente.cognome.0 }}
+                                    </div>
+                                    <h6 class="mb-1">{{ attivita.richiedente.nome_completo }}</h6>
+                                    {% if attivita.richiedente.email %}
+                                        <small class="text-muted d-block">
+                                            <i class="bi bi-envelope"></i> {{ attivita.richiedente.email }}
+                                        </small>
+                                    {% endif %}
+                                    <span class="badge mt-2" style="background-color: {{ attivita.cliente.colore_sfondo|default:'#6c757d' }}; color: {{ attivita.cliente.colore_testo|default:'#fff' }};">
+                                        {{ attivita.cliente.nome }}
+                                    </span>
+                                    <div class="mt-2">
+                                        <small class="text-muted">
+                                            <strong>{{ attivita.richiedente.attivita_totali_count }}</strong> attività totali<br>
+                                            <strong>{{ attivita.richiedente.attivita_aperte_count }}</strong> attività aperte
+                                        </small>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Card categoria -->
+                            <div class="card mt-3">
+                                <div class="card-header text-white" style="background-color: {{ attivita.categoria.colore }};">
+                                    <h6 class="mb-0">
+                                        <i class="{{ attivita.categoria.icona }}"></i> {{ attivita.categoria.nome }}
+                                    </h6>
+                                </div>
+                                <div class="card-body">
+                                    {% if attivita.categoria.descrizione %}
+                                        <small class="text-muted">{{ attivita.categoria.descrizione }}</small>
+                                    {% endif %}
+                                    <div class="mt-2 text-center">
+                                        <small class="text-muted">
+                                            <strong>{{ attivita.categoria.attivita_count }}</strong> attività in questa categoria<br>
+                                            <strong>{{ attivita.categoria.attivita_aperte_count }}</strong> attività aperte
+                                        </small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Toast per messaggi -->
+{% if messages %}
+<div class="position-fixed bottom-0 end-0 p-3" style="z-index: 1050">
+    {% for message in messages %}
+    <div class="toast align-items-center text-white bg-{{ message.tags }} border-0" role="alert" aria-live="assertive" aria-atomic="true">
+        <div class="d-flex">
+            <div class="toast-body">
+                {{ message }}
+            </div>
+            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% endif %}
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Inizializza i toast per i messaggi
+    var toastElList = [].slice.call(document.querySelectorAll('.toast'));
+    var toastList = toastElList.map(function (toastEl) {
+        var toast = new bootstrap.Toast(toastEl);
+        toast.show();
+        return toast;
+    });
+});
+
+function confirmDelete() {
+    const attivitaNome = "{{ attivita.nome_flusso }}";
+    const stato = "{{ attivita.stato }}";
+    
+    let message = `Sei SICURO di voler eliminare definitivamente l'attività "${attivitaNome}"?`;
+    
+    if (stato === 'aperta') {
+        message += `\n\nATTENZIONE: L'attività è ancora APERTA. Considera di chiuderla invece di eliminarla.`;
+    }
+    
+    message += "\n\nQuesta azione NON PUÒ essere annullata!";
+    
+    return confirm(message);
+}
+
+// Aggiungi un countdown di sicurezza per l'eliminazione di attività aperte
+let deleteButton = document.querySelector('button[type="submit"]');
+if (deleteButton) {
+    deleteButton.addEventListener('click', function(e) {
+        e.preventDefault();
+        
+        const statoAttivita = "{{ attivita.stato }}";
+        
+        if (statoAttivita === 'aperta') {
+            // Se l'attività è aperta, richiedi una conferma più forte
+            let userInput = prompt(`ATTENZIONE: Stai per eliminare un'attività APERTA!\n\nScrivi "ELIMINA" (tutto maiuscolo) per confermare:`);
+            
+            if (userInput === "ELIMINA") {
+                if (confirmDelete()) {
+                    this.form.submit();
+                }
+            } else {
+                alert("Eliminazione annullata. Devi scrivere esattamente 'ELIMINA' per confermare.");
+            }
+        } else {
+            // Se l'attività è chiusa, una semplice conferma
+            if (confirmDelete()) {
+                this.form.submit();
+            }
+        }
+    });
+}
+</script>
+
+<style>
+/* Stili personalizzati per la pagina di eliminazione */
+.card {
+    transition: transform 0.2s ease-in-out;
+}
+
+.avatar {
+    font-weight: bold;
+}
+
+.btn-danger:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(220, 53, 69, 0.3);
+}
+
+.alert {
+    border-left: 4px solid;
+}
+
+.alert-warning {
+    border-left-color: #ffc107;
+}
+
+/* Animazione per elementi critici */
+@keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+    100% { transform: scale(1); }
+}
+
+.btn-danger {
+    animation: pulse 2s infinite;
+}
+
+.btn-danger:hover {
+    animation: none;
+}
+
+/* Card dell'attività */
+.card.bg-light {
+    border-left: 4px solid var(--bs-primary);
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .btn-lg {
+        width: 100%;
+        margin-bottom: 0.5rem;
+    }
+    
+    .d-flex.gap-3 {
+        flex-direction: column;
+    }
+    
+    .avatar {
+        width: 40px !important;
+        height: 40px !important;
+        font-size: 16px !important;
+    }
+}
+</style>
+{% endblock %}

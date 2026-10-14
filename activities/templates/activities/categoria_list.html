@@ -1,0 +1,315 @@
+<!-- activities/templates/activities/categoria_list.html -->
+{% extends "base.html" %}
+
+{% block title %}Gestione Categorie{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <!-- Header con titolo e pulsante creazione -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="display-5 text-primary">
+            <i class="bi bi-tags"></i> Gestione Categorie
+        </h1>
+        <div>
+            <a href="{% url 'categoria-create' %}" class="btn btn-success me-2">
+                <i class="bi bi-plus-circle"></i> Nuova Categoria
+            </a>
+            <a href="{% url 'attivita-list' %}" class="btn btn-outline-primary">
+                <i class="bi bi-activity"></i> Attività
+            </a>
+        </div>
+    </div>
+
+    <!-- Filtri e ricerca -->
+    <div class="card mb-4 shadow-sm">
+        <div class="card-body">
+            <form method="get" class="row g-3 align-items-end">
+                <div class="col-md-3">
+                    <label for="attiva" class="form-label">Stato</label>
+                    <select name="attiva" id="attiva" class="form-control">
+                        <option value="">Tutte</option>
+                        <option value="true" {% if attiva_selected == 'true' %}selected{% endif %}>Solo attive</option>
+                        <option value="false" {% if attiva_selected == 'false' %}selected{% endif %}>Solo non attive</option>
+                    </select>
+                </div>
+                <div class="col-md-7">
+                    <label for="search" class="form-label">Ricerca</label>
+                    <input type="text" name="search" id="search" class="form-control" 
+                           value="{{ search_query }}" placeholder="Cerca per nome o descrizione...">
+                </div>
+                <div class="col-md-2">
+                    <button type="submit" class="btn btn-primary w-100">
+                        <i class="bi bi-search"></i> Cerca
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Lista delle categorie -->
+    {% if categorie %}
+    <div class="row">
+        {% for categoria in categorie %}
+        <div class="col-md-6 col-lg-4 mb-4">
+            <div class="card shadow-sm h-100 {% if not categoria.attiva %}opacity-75{% endif %}">
+                <div class="card-header d-flex justify-content-between align-items-center" 
+                     style="background-color: {{ categoria.colore }}; color: white;">
+                    <div class="d-flex align-items-center">
+                        <i class="{{ categoria.icona }} me-2 fs-5"></i>
+                        <h6 class="mb-0">{{ categoria.nome }}</h6>
+                    </div>
+                    {% if not categoria.attiva %}
+                        <span class="badge bg-light text-dark">Non Attiva</span>
+                    {% endif %}
+                </div>
+                <div class="card-body">
+                    {% if categoria.descrizione %}
+                        <p class="card-text text-muted">{{ categoria.descrizione|truncatewords:15 }}</p>
+                    {% else %}
+                        <p class="card-text text-muted fst-italic">Nessuna descrizione</p>
+                    {% endif %}
+                    
+                    <!-- Statistiche attività -->
+                    <div class="row text-center mt-3">
+                        <div class="col-6">
+                            <div class="border-end">
+                                <h5 class="text-primary mb-1">{{ categoria.attivita_count }}</h5>
+                                <small class="text-muted">Totale<br>Attività</small>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <h5 class="text-success mb-1">{{ categoria.attivita_aperte_count }}</h5>
+                            <small class="text-muted">Attività<br>Aperte</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-footer bg-transparent">
+                    <div class="d-flex justify-content-between">
+                        <small class="text-muted">
+                            <i class="bi bi-calendar"></i> {{ categoria.created_at|date:"d/m/Y" }}
+                        </small>
+                        <small class="text-muted">
+                            Ordine: {{ categoria.ordinamento }}
+                        </small>
+                    </div>
+                    <div class="btn-group w-100 mt-2" role="group">
+                        <a href="{% url 'categoria-detail' categoria.pk %}" 
+                           class="btn btn-sm btn-outline-primary">
+                            <i class="bi bi-eye"></i> Dettagli
+                        </a>
+                        <a href="{% url 'categoria-update' categoria.pk %}" 
+                           class="btn btn-sm btn-outline-warning">
+                            <i class="bi bi-pencil"></i> Modifica
+                        </a>
+                        <a href="{% url 'categoria-delete' categoria.pk %}" 
+                           class="btn btn-sm btn-outline-danger"
+                           onclick="return confirm('Sei sicuro di voler eliminare questa categoria?')">
+                            <i class="bi bi-trash"></i> Elimina
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Paginazione -->
+    {% if is_paginated %}
+    <nav aria-label="Paginazione categorie" class="mt-4">
+        <ul class="pagination justify-content-center">
+            {% if page_obj.has_previous %}
+                <li class="page-item">
+                    <a class="page-link" href="?page=1{% if request.GET.attiva %}&attiva={{ request.GET.attiva }}{% endif %}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}">Prima</a>
+                </li>
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if request.GET.attiva %}&attiva={{ request.GET.attiva }}{% endif %}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}">Precedente</a>
+                </li>
+            {% endif %}
+            
+            <li class="page-item active">
+                <span class="page-link">{{ page_obj.number }} di {{ page_obj.paginator.num_pages }}</span>
+            </li>
+            
+            {% if page_obj.has_next %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if request.GET.attiva %}&attiva={{ request.GET.attiva }}{% endif %}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}">Successiva</a>
+                </li>
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}{% if request.GET.attiva %}&attiva={{ request.GET.attiva }}{% endif %}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}">Ultima</a>
+                </li>
+            {% endif %}
+        </ul>
+    </nav>
+    {% endif %}
+
+    {% else %}
+    <!-- Messaggio quando non ci sono categorie -->
+    <div class="text-center py-5">
+        <div class="mb-4">
+            <i class="bi bi-tags display-1 text-muted"></i>
+        </div>
+        <h3 class="text-muted mb-3">Nessuna categoria trovata</h3>
+        <p class="text-muted mb-4">
+            {% if search_query or attiva_selected %}
+                Non sono state trovate categorie che corrispondono ai criteri di ricerca.
+            {% else %}
+                Non ci sono ancora categorie nel sistema.
+            {% endif %}
+        </p>
+        <a href="{% url 'categoria-create' %}" class="btn btn-primary">
+            <i class="bi bi-plus-circle"></i> Crea la prima categoria
+        </a>
+        
+        <!-- Categorie suggerite -->
+        <div class="mt-5">
+            <h5 class="text-muted mb-3">Categorie Suggerite:</h5>
+            <div class="row justify-content-center">
+                <div class="col-md-8">
+                    <div class="d-flex flex-wrap justify-content-center gap-2">
+                        <span class="badge bg-primary p-2">
+                            <i class="bi bi-gear"></i> Configurazione
+                        </span>
+                        <span class="badge bg-success p-2">
+                            <i class="bi bi-bug"></i> Bug Fix
+                        </span>
+                        <span class="badge bg-info p-2">
+                            <i class="bi bi-arrow-up"></i> Aggiornamento
+                        </span>
+                        <span class="badge bg-warning p-2">
+                            <i class="bi bi-shield"></i> Sicurezza
+                        </span>
+                        <span class="badge bg-danger p-2">
+                            <i class="bi bi-exclamation-triangle"></i> Urgente
+                        </span>
+                        <span class="badge bg-secondary p-2">
+                            <i class="bi bi-tools"></i> Manutenzione
+                        </span>
+                    </div>
+                    <small class="text-muted mt-3 d-block">
+                        Suggerimenti per organizzare le tue attività
+                    </small>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Toast per messaggi -->
+{% if messages %}
+<div class="position-fixed bottom-0 end-0 p-3" style="z-index: 1050">
+    {% for message in messages %}
+    <div class="toast align-items-center text-white bg-{{ message.tags }} border-0" role="alert" aria-live="assertive" aria-atomic="true">
+        <div class="d-flex">
+            <div class="toast-body">
+                {{ message }}
+            </div>
+            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% endif %}
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Inizializza i toast
+    var toastElList = [].slice.call(document.querySelectorAll('.toast'));
+    var toastList = toastElList.map(function (toastEl) {
+        var toast = new bootstrap.Toast(toastEl);
+        toast.show();
+        return toast;
+    });
+
+    // Conferma eliminazione
+    document.querySelectorAll('a[href*="delete"]').forEach(function(link) {
+        link.addEventListener('click', function(e) {
+            if (!confirm('Sei sicuro di voler eliminare questa categoria? Le attività associate verranno trasferite alla categoria "Non categorizzata".')) {
+                e.preventDefault();
+            }
+        });
+    });
+
+    // Animazioni card
+    const cards = document.querySelectorAll('.card');
+    cards.forEach((card, index) => {
+        card.style.opacity = '0';
+        card.style.transform = 'translateY(20px)';
+        setTimeout(() => {
+            card.style.transition = 'all 0.3s ease';
+            card.style.opacity = '1';
+            card.style.transform = 'translateY(0)';
+        }, index * 100);
+    });
+});
+</script>
+
+<style>
+/* Stili personalizzati per la lista categorie */
+.card {
+    transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+}
+
+.card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 12px rgba(0,0,0,0.15);
+}
+
+.badge {
+    font-size: 0.9rem;
+}
+
+/* Opacità per categorie non attive */
+.opacity-75 {
+    opacity: 0.75;
+}
+
+.opacity-75:hover {
+    opacity: 1;
+}
+
+/* Badge categorie suggerite */
+.badge.p-2 {
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: transform 0.2s ease;
+}
+
+.badge.p-2:hover {
+    transform: scale(1.1);
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .display-5 {
+        font-size: 2rem;
+    }
+    
+    .btn-group {
+        flex-direction: column;
+    }
+    
+    .btn-group .btn {
+        margin-bottom: 2px;
+    }
+}
+
+/* Animazioni */
+@keyframes fadeInUp {
+    from { 
+        opacity: 0; 
+        transform: translateY(30px); 
+    }
+    to { 
+        opacity: 1; 
+        transform: translateY(0); 
+    }
+}
+
+.card {
+    animation: fadeInUp 0.5s ease-out;
+}
+</style>
+{% endblock %}

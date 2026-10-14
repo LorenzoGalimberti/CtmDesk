@@ -1,0 +1,6 @@
+<h2>Sei sicuro di voler eliminare "{{ procedura.nome }}"?</h2>
+<form method="post">
+    {% csrf_token %}
+    <button type="submit">Sì, elimina</button>
+</form>
+<a href="{% url 'procedura-list' %}">Annulla</a>

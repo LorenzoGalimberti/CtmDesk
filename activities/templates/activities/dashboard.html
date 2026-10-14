@@ -1,0 +1,432 @@
+<!-- activities/templates/activities/dashboard.html -->
+{% extends "base.html" %}
+
+{% block title %}Dashboard Attività{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <!-- Header Dashboard -->
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <h1 class="display-5 text-primary">
+                <i class="bi bi-speedometer2"></i> Dashboard Attività
+            </h1>
+            <p class="lead text-muted">Panoramica generale delle attività e dei flussi</p>
+        </div>
+        <div class="col-md-4 text-md-end">
+            <div class="btn-group" role="group">
+                <a href="{% url 'attivita-create' %}" class="btn btn-success">
+                    <i class="bi bi-plus-circle"></i> Nuova Attività
+                </a>
+                <a href="{% url 'attivita-list' %}" class="btn btn-outline-primary">
+                    <i class="bi bi-list-ul"></i> Tutte le Attività
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Statistiche principali -->
+    <div class="row mb-5">
+        <div class="col-md-3 mb-3">
+            <div class="card bg-primary text-white h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h6 class="card-title">Totale Attività</h6>
+                            <h2 class="mb-0">{{ totale_attivita }}</h2>
+                            <small class="opacity-75">In tutto il sistema</small>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="bi bi-activity fs-1 opacity-75"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-3 mb-3">
+            <div class="card bg-success text-white h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h6 class="card-title">Attività Aperte</h6>
+                            <h2 class="mb-0">{{ attivita_aperte }}</h2>
+                            <small class="opacity-75">In lavorazione</small>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="bi bi-check-circle fs-1 opacity-75"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-3 mb-3">
+            <div class="card bg-secondary text-white h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h6 class="card-title">Attività Chiuse</h6>
+                            <h2 class="mb-0">{{ attivita_chiuse }}</h2>
+                            <small class="opacity-75">Completate</small>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="bi bi-x-circle fs-1 opacity-75"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4 mb-3">
+            <div class="card bg-info text-white h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h6 class="card-title">Categorie Attive</h6>
+                            <h2 class="mb-0">{{ totale_categorie }}</h2>
+                            <small class="opacity-75">Nel sistema</small>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="bi bi-tags fs-1 opacity-75"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Colonna sinistra - Attività per Cliente -->
+        <div class="col-md-6 mb-4">
+            <div class="card shadow-sm h-100">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">
+                        <i class="bi bi-building"></i> Attività per Cliente
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {% if attivita_per_cliente %}
+                        <div class="table-responsive">
+                            <table class="table table-sm">
+                                <thead>
+                                    <tr>
+                                        <th>Cliente</th>
+                                        <th class="text-center">N° Attività</th>
+                                        <th class="text-center">% sul Totale</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for cliente in attivita_per_cliente %}
+                                    <tr>
+                                        <td>
+                                            <span class="badge me-2" 
+                                                  style="background-color: {{ cliente.colore_sfondo|default:'#6c757d' }}; color: {{ cliente.colore_testo|default:'#fff' }};">
+                                                {{ cliente.nome }}
+                                            </span>
+                                        </td>
+                                        <td class="text-center">
+                                            <strong>{{ cliente.num_attivita }}</strong>
+                                        </td>
+                                        <td class="text-center">
+                                            {% widthratio cliente.num_attivita totale_attivita 100 %}%
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <div class="text-center text-muted py-4">
+                            <i class="bi bi-building display-4"></i>
+                            <p class="mt-2">Nessun dato disponibile</p>
+                        </div>
+                    {% endif %}
+                </div>
+                <div class="card-footer bg-transparent">
+                    <a href="{% url 'attivita-list' %}" class="btn btn-sm btn-outline-primary">
+                        <i class="bi bi-eye"></i> Vedi tutte le attività
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Colonna destra - Attività per Categoria -->
+        <div class="col-md-6 mb-4">
+            <div class="card shadow-sm h-100">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">
+                        <i class="bi bi-tags"></i> Attività per Categoria
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {% if attivita_per_categoria %}
+                        <div class="table-responsive">
+                            <table class="table table-sm">
+                                <thead>
+                                    <tr>
+                                        <th>Categoria</th>
+                                        <th class="text-center">N° Attività</th>
+                                        <th class="text-center">% sul Totale</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for categoria in attivita_per_categoria %}
+                                    <tr>
+                                        <td>
+                                            <span class="badge me-2" 
+                                                  style="background-color: {{ categoria.colore }}; color: white;">
+                                                <i class="{{ categoria.icona }}"></i> {{ categoria.nome }}
+                                            </span>
+                                        </td>
+                                        <td class="text-center">
+                                            <strong>{{ categoria.num_attivita }}</strong>
+                                        </td>
+                                        <td class="text-center">
+                                            {% widthratio categoria.num_attivita totale_attivita 100 %}%
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <div class="text-center text-muted py-4">
+                            <i class="bi bi-tags display-4"></i>
+                            <p class="mt-2">Nessuna categoria disponibile</p>
+                            <a href="{% url 'categoria-create' %}" class="btn btn-sm btn-primary">
+                                <i class="bi bi-plus"></i> Crea prima categoria
+                            </a>
+                        </div>
+                    {% endif %}
+                </div>
+                <div class="card-footer bg-transparent">
+                    <a href="{% url 'categoria-list' %}" class="btn btn-sm btn-outline-primary">
+                        <i class="bi bi-tags"></i> Gestisci categorie
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Attività Recenti -->
+    <div class="row">
+        <div class="col-12 mb-4">
+            <div class="card shadow-sm">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">
+                        <i class="bi bi-clock-history"></i> Attività Recenti
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {% if attivita_recenti %}
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Nome Flusso</th>
+                                        <th>Richiedente</th>
+                                        <th>Categoria</th>
+                                        <th>Stato</th>
+                                        <th>Data</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for attivita in attivita_recenti %}
+                                    <tr>
+                                        <td>
+                                            <a href="{% url 'attivita-detail' attivita.pk %}" class="text-decoration-none">
+                                                {{ attivita.nome_flusso|truncatewords:5 }}
+                                            </a>
+                                        </td>
+                                        <td>{{ attivita.richiedente.nome_completo }}</td>
+                                        <td>
+                                            <span class="badge" style="background-color: {{ attivita.categoria.colore }}; color: white;">
+                                                <i class="{{ attivita.categoria.icona }}"></i> {{ attivita.categoria.nome }}
+                                            </span>
+                                        </td>
+                                        <td>
+                                            {% if attivita.is_aperta %}
+                                                <span class="badge bg-success">Aperta</span>
+                                            {% else %}
+                                                <span class="badge bg-secondary">Chiusa</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>{{ attivita.data_creazione|date:"d/m/Y H:i" }}</td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <div class="text-center text-muted py-4">
+                            <i class="bi bi-inbox display-4"></i>
+                            <p class="mt-2">Nessuna attività recente</p>
+                        </div>
+                    {% endif %}
+                </div>
+                <div class="card-footer bg-transparent">
+                    <a href="{% url 'attivita-list' %}" class="btn btn-sm btn-outline-primary">
+                        <i class="bi bi-list-ul"></i> Vedi tutte le attività
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Azioni Rapide -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card shadow-sm">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">
+                        <i class="bi bi-lightning"></i> Azioni Rapide
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row text-center">
+                        <div class="col-md-3 mb-3">
+                            <a href="{% url 'attivita-create' %}" class="btn btn-outline-success btn-lg w-100 h-100 d-flex flex-column justify-content-center">
+                                <i class="bi bi-plus-circle fs-1 mb-2"></i>
+                                <span>Crea Nuova<br>Attività</span>
+                            </a>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <a href="{% url 'richiedente-create' %}" class="btn btn-outline-primary btn-lg w-100 h-100 d-flex flex-column justify-content-center">
+                                <i class="bi bi-person-plus fs-1 mb-2"></i>
+                                <span>Aggiungi<br>Richiedente</span>
+                            </a>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <a href="{% url 'attivita-list' %}?stato=aperta" class="btn btn-outline-warning btn-lg w-100 h-100 d-flex flex-column justify-content-center">
+                                <i class="bi bi-check-circle fs-1 mb-2"></i>
+                                <span>Attività<br>Aperte</span>
+                            </a>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <a href="{% url 'richiedente-list' %}" class="btn btn-outline-info btn-lg w-100 h-100 d-flex flex-column justify-content-center">
+                                <i class="bi bi-people fs-1 mb-2"></i>
+                                <span>Gestione<br>Richiedenti</span>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Grafico Attività nel Tempo (placeholder per future implementazioni) -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow-sm">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">
+                        <i class="bi bi-graph-up"></i> Andamento Attività
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="text-center text-muted py-5">
+                        <i class="bi bi-graph-up display-1"></i>
+                        <h4 class="mt-3">Grafici e Analytics</h4>
+                        <p>Funzionalità di reporting avanzato in arrivo...</p>
+                        <small class="text-muted">
+                            Qui sarà possibile visualizzare grafici sull'andamento delle attività nel tempo,
+                            statistiche per cliente e molto altro.
+                        </small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Toast per messaggi -->
+{% if messages %}
+<div class="position-fixed bottom-0 end-0 p-3" style="z-index: 1050">
+    {% for message in messages %}
+    <div class="toast align-items-center text-white bg-{{ message.tags }} border-0" role="alert" aria-live="assertive" aria-atomic="true">
+        <div class="d-flex">
+            <div class="toast-body">
+                {{ message }}
+            </div>
+            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% endif %}
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Inizializza i toast per i messaggi
+    var toastElList = [].slice.call(document.querySelectorAll('.toast'));
+    var toastList = toastElList.map(function (toastEl) {
+        var toast = new bootstrap.Toast(toastEl);
+        toast.show();
+        return toast;
+    });
+
+    // Animazione per le card statistiche
+    const cards = document.querySelectorAll('.card');
+    cards.forEach((card, index) => {
+        card.style.opacity = '0';
+        card.style.transform = 'translateY(20px)';
+        setTimeout(() => {
+            card.style.transition = 'all 0.5s ease';
+            card.style.opacity = '1';
+            card.style.transform = 'translateY(0)';
+        }, index * 100);
+    });
+});
+
+// Aggiorna le statistiche ogni 5 minuti (opzionale)
+setInterval(function() {
+    // Qui potresti aggiungere una chiamata AJAX per aggiornare le statistiche
+    console.log('Aggiornamento statistiche...');
+}, 300000); // 5 minuti
+</script>
+
+<style>
+/* Stili personalizzati per la dashboard */
+.card {
+    transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+}
+
+.card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+.btn:hover {
+    transform: translateY(-1px);
+}
+
+.list-group-item {
+    transition: background-color 0.2s ease;
+}
+
+.list-group-item:hover {
+    background-color: rgba(0,0,0,0.02);
+}
+
+/* Animazione per i numeri delle statistiche */
+.card h2 {
+    font-weight: bold;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.1);
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .display-5 {
+        font-size: 2rem;
+    }
+    
+    .btn-lg {
+        padding: 0.5rem 1rem;
+        font-size: 0.9rem;
+    }
+}
+</style>
+{% endblock %}

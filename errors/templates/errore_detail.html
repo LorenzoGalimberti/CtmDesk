@@ -1,0 +1,43 @@
+{% extends 'base.html' %}
+{% block title %}Dettaglio Errore{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <h1 class="mb-4">Dettaglio Errore</h1>
+    
+    <div class="card">
+        <div class="card-body">
+            <h5 class="card-title">Cliente: {{ errore.cliente }}</h5>
+            <h6 class="card-subtitle mb-2 text-muted">Data: {{ errore.data }}</h6>
+            
+            <p><strong>Ambiente:</strong> {{ errore.ambiente }}</p>
+            <p><strong>Note:</strong> {{ errore.note }}</p>
+            <p>
+                <strong>Livello:</strong>
+                <span class="badge 
+                    {% if errore.livello == 'Alto' %}
+                        bg-danger
+                    {% elif errore.livello == 'Medio' %}
+                        bg-warning text-dark
+                    {% else %}
+                        bg-success
+                    {% endif %}
+                ">
+                    {{ errore.livello }}
+                </span>
+            </p>
+            <p><strong>Occorrenze:</strong> {{ errore.occorrenze }}</p>
+            
+            <div class="mt-4">
+                <a href="{% url 'errore_list' %}" class="btn btn-secondary">Torna alla Lista</a>
+                <a href="{% url 'errore_update' errore.pk %}" class="btn btn-primary">Modifica</a>
+                
+                <form method="POST" action="{% url 'errore_delete' errore.pk %}" class="d-inline">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-danger">Elimina</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

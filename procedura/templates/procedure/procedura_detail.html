@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+
+{% block title %}{{ procedura.nome }}{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>{{ procedura.nome }}</h2>
+    <p><strong>Ambiente:</strong> {{ procedura.ambiente }}</p>
+    <p><strong>Cliente:</strong> {{ procedura.cliente }}</p>
+    <p><strong>Tipologia:</strong> {{ procedura.tipologia }}</p>
+    
+    <a href="{% url 'procedura-list' %}" class="btn btn-primary">🔙 Torna alla lista</a>
+</div>
+{% endblock %}
