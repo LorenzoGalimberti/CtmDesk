@@ -164,3 +164,7 @@ SUMMERNOTE_UPLOAD_PATH = 'summernote_uploads/'
 LOGIN_URL = 'login'
 LOGIN_REDIRECT_URL = '/'
 LOGOUT_REDIRECT_URL = 'login'
+
+# Sessione: resta valida 14 giorni dall'ultimo utilizzo
+SESSION_COOKIE_AGE = 60 * 60 * 24 * 14
+SESSION_SAVE_EVERY_REQUEST = True

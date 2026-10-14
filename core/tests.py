@@ -59,10 +59,6 @@ class ClienteUnicoTests(BaseTestCase):
         self.assertEqual(errore.cliente, self.cliente)
         self.assertEqual(procedura.cliente, self.cliente)
 
-    def test_home_conta_i_clienti(self):
-        risposta = self.client.get(reverse('home'))
-        self.assertEqual(risposta.context['total_clients'], 1)
-
     def test_form_errori_ha_menu_a_tendina_dei_clienti(self):
         risposta = self.client.get(reverse('errore_create'))
         self.assertContains(risposta, '<select name="cliente"')
@@ -343,8 +339,7 @@ class IsolamentoErroriHomeTests(BaseTestCase):
             Evento.objects.create(titolo=titolo, data_inizio=adesso, data_fine=adesso,
                                   cliente=self.cliente, owner=utente)
         home = self.client.get(reverse('home'))
-        self.assertEqual(list(home.context['events_by_client']),
-                         [{'cliente__nome': 'ACME', 'count': 1}])
+        self.assertEqual([e.titolo for e in home.context['eventi_oggi']], ['Evento mio'])
         ricerca = self.client.get(reverse('global_search'), {'q': 'Evento'})
         self.assertEqual([r['title'] for r in ricerca.json()['results']], ['Evento mio'])
 
@@ -475,3 +470,72 @@ class ProcedureCondiviseTests(BaseTestCase):
         scelte = risposta.context['form'].fields['procedura'].queryset
         self.assertIn(self.mia, scelte)
         self.assertNotIn(self.altrui, scelte)
+
+
+class PasswordESessioneTests(BaseTestCase):
+    def test_la_pagina_cambio_password_si_apre(self):
+        self.assertEqual(self.client.get(reverse('password_change')).status_code, 200)
+
+    def test_cambio_password_riuscito_e_resto_collegato(self):
+        nuova = 'Nuova-Password-2026'
+        risposta = self.client.post(reverse('password_change'), {
+            'old_password': 'x', 'new_password1': nuova, 'new_password2': nuova,
+        })
+        self.assertRedirects(risposta, reverse('password_change_done'))
+        self.user.refresh_from_db()
+        self.assertTrue(self.user.check_password(nuova))
+        self.assertEqual(self.client.get(reverse('home')).status_code, 200)
+
+    def test_password_attuale_sbagliata(self):
+        nuova = 'Nuova-Password-2026'
+        risposta = self.client.post(reverse('password_change'), {
+            'old_password': 'sbagliata', 'new_password1': nuova, 'new_password2': nuova,
+        })
+        self.assertEqual(risposta.status_code, 200)
+        self.user.refresh_from_db()
+        self.assertTrue(self.user.check_password('x'))
+
+    def test_la_sessione_dura_14_giorni(self):
+        from django.conf import settings
+        self.assertEqual(settings.SESSION_COOKIE_AGE, 14 * 24 * 60 * 60)
+
+
+class HomeLavoroTests(BaseTestCase):
+    def setUp(self):
+        super().setUp()
+        from datetime import timedelta
+        self.altro = get_user_model().objects.create_user('altro', password='x')
+        richiedente = Richiedente.objects.create(nome='Mario', cognome='Rossi', cliente=self.cliente)
+        categoria = Categoria.objects.create(nome='Test')
+        crea = lambda nome, utente, stato='aperta': Attivita.objects.create(
+            nome_flusso=nome, richiedente=richiedente, categoria=categoria, owner=utente, stato=stato)
+        crea('Mia aperta', self.user)
+        crea('Mia chiusa', self.user, 'chiusa')
+        crea('Altrui aperta', self.altro)
+        oggi = date.today()
+        task = lambda titolo, giorno, utente: Task.objects.create(
+            title=titolo, data_creazione=giorno, owner=utente)
+        task('Task oggi', oggi, self.user)
+        task('Task in ritardo', oggi - timedelta(days=2), self.user)
+        task('Task domani', oggi + timedelta(days=1), self.user)
+        task('Task altrui', oggi, self.altro)
+        dati = dict(cliente=self.cliente, data=oggi, ambiente='Test', livello='basso', occorrenze=1)
+        Errore.objects.create(owner=self.user, **dati)
+        Errore.objects.create(owner=self.altro, **dati)
+
+    def test_attivita_aperte_solo_mie(self):
+        home = self.client.get(reverse('home'))
+        self.assertEqual([a.nome_flusso for a in home.context['attivita_aperte']], ['Mia aperta'])
+        self.assertEqual(home.context['totale_attivita_aperte'], 1)
+
+    def test_todo_di_oggi_e_in_ritardo_solo_miei(self):
+        home = self.client.get(reverse('home'))
+        titoli = {t.title for t in home.context['task_da_fare']}
+        self.assertEqual(titoli, {'Task oggi', 'Task in ritardo'})
+        self.assertEqual(home.context['totale_task_da_fare'], 2)
+        self.assertEqual(home.context['task_in_ritardo'], 1)
+
+    def test_errori_solo_miei(self):
+        home = self.client.get(reverse('home'))
+        self.assertEqual(home.context['totale_errori'], 1)
+        self.assertEqual(len(home.context['errori_recenti']), 1)

@@ -4,84 +4,58 @@ from datetime import date, datetime, timedelta
 from calendario.models import Evento
 from .models import Cliente
 from procedura.models import Procedura, Step, Ambiente, Tipologia
+from activities.models import Attivita
+from errors.models import Errore
+from todo.models import Task
 from django.db.models import Count, Q
 from django.utils import timezone
 
 def homepage(request):
-    # Data corrente
-    oggi = date.today()
+    utente = request.user
+    oggi = timezone.localdate()
     ora_attuale = timezone.now()
-    
-    # Eventi di oggi
-    eventi_oggi = Evento.objects.filter(
-        owner=request.user,
-        data_inizio__date=oggi,
-        archived=False
+
+    # Eventi (solo i miei)
+    miei_eventi = Evento.objects.filter(owner=utente, archived=False)
+    eventi_oggi = miei_eventi.filter(
+        data_inizio__date=oggi
     ).select_related('cliente').order_by('data_inizio')
-    
-    # Prossimi eventi della settimana (escluso oggi)
-    fine_settimana = oggi + timedelta(days=7)
-    prossimi_eventi = Evento.objects.filter(
-        owner=request.user,
+    prossimi_eventi = miei_eventi.filter(
         data_inizio__date__gt=oggi,
-        data_inizio__date__lte=fine_settimana,
-        archived=False
+        data_inizio__date__lte=oggi + timedelta(days=7),
     ).select_related('cliente').order_by('data_inizio')[:6]
-    
-    # Eventi urgenti (che iniziano tra meno di 2 ore)
-    tra_due_ore = ora_attuale + timedelta(hours=2)
-    urgent_events = Evento.objects.filter(
-        owner=request.user,
-        data_inizio__lte=tra_due_ore,
+    urgent_events = miei_eventi.filter(
         data_inizio__gte=ora_attuale,
-        archived=False
+        data_inizio__lte=ora_attuale + timedelta(hours=2),
     ).count()
-    
-    # Statistiche generali
-    total_procedures = Procedura.objects.count()
-    total_events_today = eventi_oggi.count()
-    total_steps = Step.objects.count()
-    
-    # Clienti (tabella unica in core)
-    total_clients = Cliente.objects.count()
-    
-    # Procedure recenti (ultime 5 create/modificate)
-    recent_procedures = Procedura.objects.select_related(
-        'ambiente', 'cliente', 'tipologia'
-    ).prefetch_related('steps').order_by('-id')[:5]
-    
-    # Statistiche aggiuntive per insights
-    procedures_by_environment = Procedura.objects.values(
-        'ambiente__nome'
-    ).annotate(count=Count('id')).order_by('-count')[:3]
-    
-    procedures_by_client = Procedura.objects.values(
-        'cliente__nome'
-    ).annotate(count=Count('id')).order_by('-count')[:3]
-    
-    # Eventi per cliente (top 3)
-    events_by_client = Evento.objects.filter(
-        owner=request.user,
-        archived=False
-    ).values('cliente__nome').annotate(
-        count=Count('id')
-    ).order_by('-count')[:3]
-    
+
+    # To-do da fare: quelli di oggi e quelli rimasti indietro
+    task_da_fare = Task.objects.filter(
+        owner=utente, completed=False, archiviato=False, data_creazione__lte=oggi
+    )
+    # Attivita' aperte
+    attivita_aperte = Attivita.objects.filter(owner=utente, stato='aperta')
+    # Errori
+    miei_errori = Errore.objects.filter(owner=utente)
+
     context = {
         'today': oggi,
         'eventi_oggi': eventi_oggi,
         'prossimi_eventi': prossimi_eventi,
         'urgent_events': urgent_events,
-        'total_procedures': total_procedures,
-        'total_events_today': total_events_today,
-        'total_clients': total_clients,
-        'total_steps': total_steps,
-        'recent_procedures': recent_procedures,
-        'procedures_by_environment': procedures_by_environment,
-        'procedures_by_client': procedures_by_client,
-        'events_by_client': events_by_client,
+        'task_da_fare': task_da_fare.select_related('cliente', 'attivita').order_by('data_creazione', 'id')[:8],
+        'totale_task_da_fare': task_da_fare.count(),
+        'task_in_ritardo': task_da_fare.filter(data_creazione__lt=oggi).count(),
+        'attivita_aperte': attivita_aperte.select_related(
+            'richiedente', 'richiedente__cliente', 'categoria'
+        ).order_by('-data_creazione')[:6],
+        'totale_attivita_aperte': attivita_aperte.count(),
+        'errori_recenti': miei_errori.select_related('cliente').order_by('-data', '-id')[:5],
+        'totale_errori': miei_errori.count(),
+        'recent_procedures': Procedura.objects.select_related(
+            'ambiente', 'cliente', 'tipologia'
+        ).annotate(num_step=Count('steps')).order_by('-id')[:5],
     }
-    
     return render(request, 'homepage.html', context)
 
 
