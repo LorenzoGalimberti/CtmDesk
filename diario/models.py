@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.db import models
 from core.models import Cliente  # Importa il modello Cliente dall'app core
 
@@ -13,6 +14,10 @@ class Tag(models.Model):
 
 class Diario(models.Model):
     titolo = models.CharField(max_length=200)
+    owner = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.PROTECT, null=True, blank=True,
+        verbose_name='Proprietario',
+    )
     contenuto = models.TextField()
     data_creazione = models.DateTimeField()
     tags = models.ManyToManyField(Tag, related_name='diari', blank=True)  # Manteniamo per retrocompatibilità

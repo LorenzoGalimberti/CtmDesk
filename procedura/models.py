@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.db import models
 from django.db.models import Max
 
@@ -22,6 +23,10 @@ class Procedura(models.Model):
     nome = models.CharField(max_length=255)
     ambiente = models.ForeignKey(Ambiente, blank=True, null=True, on_delete=models.CASCADE)
     cliente = models.ForeignKey(Cliente, on_delete=models.PROTECT)
+    owner = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.PROTECT, null=True, blank=True,
+        verbose_name='Proprietario',
+    )
     tipologia = models.ForeignKey(Tipologia, blank=True, null=True, on_delete=models.CASCADE)
 
     def __str__(self):

@@ -1,9 +1,14 @@
 # calendario/models.py
+from django.conf import settings
 from django.db import models
 from core.models import Cliente  # Importa Cliente dal core
 
 class Evento(models.Model):
     titolo = models.CharField(max_length=200)
+    owner = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.PROTECT, null=True, blank=True,
+        verbose_name='Proprietario',
+    )
     descrizione = models.TextField(blank=True, null=True)
     data_inizio = models.DateTimeField()
     data_fine = models.DateTimeField()

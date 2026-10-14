@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.db import models
 
 from core.models import Cliente
@@ -11,6 +12,10 @@ class Errore(models.Model):
     ]
 
     cliente = models.ForeignKey(Cliente, on_delete=models.PROTECT)
+    owner = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.PROTECT, null=True, blank=True,
+        verbose_name='Proprietario',
+    )
     data = models.DateField()
     ambiente = models.CharField(max_length=100)
     note = models.TextField(blank=True)

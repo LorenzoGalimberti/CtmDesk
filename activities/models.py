@@ -1,4 +1,5 @@
 # activities/models.py
+from django.conf import settings
 from django.db import models
 from core.models import Cliente
 import os
@@ -85,6 +86,10 @@ class Attivita(models.Model):
     ]
     
     nome_flusso = models.CharField(max_length=255, verbose_name="Nome Flusso")
+    owner = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.PROTECT, null=True, blank=True,
+        verbose_name='Proprietario',
+    )
     richiedente = models.ForeignKey(Richiedente, on_delete=models.CASCADE, related_name='attivita')
     categoria = models.ForeignKey(Categoria, on_delete=models.CASCADE, related_name='attivita', 
                                   verbose_name="Categoria")

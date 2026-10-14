@@ -1,4 +1,5 @@
 # todo/models.py
+from django.conf import settings
 from django.db import models
 from datetime import datetime
 from core.models import Cliente
@@ -10,6 +11,10 @@ class Task(models.Model):
     ]
     
     title = models.CharField(max_length=255)
+    owner = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.PROTECT, null=True, blank=True,
+        verbose_name='Proprietario',
+    )
     completed = models.BooleanField(default=False)
     archiviato = models.BooleanField(default=False)
     data_creazione = models.DateField(null=True, blank=True)
