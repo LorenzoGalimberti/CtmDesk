@@ -1,7 +1,8 @@
 from django.shortcuts import render
 from datetime import date, datetime, timedelta
-from calendario.models import Evento, Cliente as CalendarioCliente
-from procedura.models import Procedura, Step, Cliente as ProceduraCliente, Ambiente, Tipologia
+from calendario.models import Evento
+from .models import Cliente
+from procedura.models import Procedura, Step, Ambiente, Tipologia
 from django.db.models import Count, Q
 from django.utils import timezone
 
@@ -37,10 +38,8 @@ def homepage(request):
     total_events_today = eventi_oggi.count()
     total_steps = Step.objects.count()
     
-    # Clienti unici (combinando da entrambe le app se necessario)
-    calendario_clients = CalendarioCliente.objects.count()
-    procedura_clients = ProceduraCliente.objects.count()
-    total_clients = max(calendario_clients, procedura_clients)  # O combinali se sono diversi
+    # Clienti (tabella unica in core)
+    total_clients = Cliente.objects.count()
     
     # Procedure recenti (ultime 5 create/modificate)
     recent_procedures = Procedura.objects.select_related(

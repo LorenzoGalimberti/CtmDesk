@@ -1,34 +1,32 @@
 from django.db import models
+from django.db.models import Max
+
+from core.models import Cliente
+
 
 class Ambiente(models.Model):
     nome = models.CharField(max_length=255)
-    
+
     def __str__(self):
         return self.nome
 
-class Cliente(models.Model):
-    nome = models.CharField(max_length=255)
-    
-    def __str__(self):
-        return self.nome
 
 class Tipologia(models.Model):
     nome = models.CharField(max_length=255)
-    
+
     def __str__(self):
         return self.nome
+
 
 class Procedura(models.Model):
     nome = models.CharField(max_length=255)
-    ambiente = models.ForeignKey(Ambiente,blank=True,null=True, on_delete=models.CASCADE)
-    cliente = models.ForeignKey(Cliente, on_delete=models.CASCADE)
-    tipologia = models.ForeignKey(Tipologia,blank=True ,null=True,on_delete=models.CASCADE)
+    ambiente = models.ForeignKey(Ambiente, blank=True, null=True, on_delete=models.CASCADE)
+    cliente = models.ForeignKey(Cliente, on_delete=models.PROTECT)
+    tipologia = models.ForeignKey(Tipologia, blank=True, null=True, on_delete=models.CASCADE)
 
     def __str__(self):
         return self.nome
 
-from django.db import models
-from django.db.models import Max
 
 class Step(models.Model):
     procedura = models.ForeignKey(Procedura, on_delete=models.CASCADE, related_name='steps')
@@ -46,4 +44,3 @@ class Step(models.Model):
             last_order = Step.objects.filter(procedura=self.procedura).aggregate(Max('ordine'))['ordine__max']
             self.ordine = 0 if last_order is None else last_order + 1
         super().save(*args, **kwargs)
-
