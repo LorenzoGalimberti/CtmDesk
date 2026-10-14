@@ -1,7 +1,0 @@
-<h2>{% if form.instance.pk %}Modifica Procedura{% else %}Crea Procedura{% endif %}</h2>
-<form method="post">
-    {% csrf_token %}
-    {{ form.as_p }}
-    <button type="submit">Salva</button>
-</form>
-<a href="{% url 'procedura-list' %}">Annulla</a>

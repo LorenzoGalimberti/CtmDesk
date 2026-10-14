@@ -40,7 +40,6 @@ INSTALLED_APPS = [
     'errors',
     'core',
     'calendario',
-    'procedure',
     'procedura',
     'todo',
     'diario',
